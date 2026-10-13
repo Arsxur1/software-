@@ -1,0 +1,90 @@
+import type { CheckResult, Lang } from "@ishonch/shared";
+
+export interface TgUser {
+  id: number;
+  language_code?: string;
+}
+
+export interface Me {
+  id: string;
+  language: Lang;
+  role: string;
+  acceptedTerms: boolean;
+  checks: { perDay: number; remaining: number };
+}
+
+export class ApiError extends Error {
+  constructor(
+    public status: number,
+    public code: string,
+    message: string,
+  ) {
+    super(message);
+  }
+}
+
+export interface ImageFile {
+  data: Uint8Array<ArrayBuffer>;
+  mediaType: string;
+}
+
+/** Thin client for the internal API; the bot never touches the database directly. */
+export class ApiClient {
+  constructor(
+    private baseUrl: string,
+    private internalToken: string,
+  ) {}
+
+  private headers(user: TgUser): Record<string, string> {
+    return {
+      authorization: `Internal ${this.internalToken}`,
+      "x-telegram-user": JSON.stringify({ id: user.id, language_code: user.language_code }),
+    };
+  }
+
+  private async request<T>(path: string, init: RequestInit & { user?: TgUser }): Promise<T> {
+    const res = await fetch(`${this.baseUrl}${path}`, {
+      ...init,
+      headers: { ...(init.user ? this.headers(init.user) : {}), ...(init.headers as Record<string, string>) },
+    });
+    const body = (await res.json().catch(() => ({}))) as { error?: string; message?: string };
+    if (!res.ok) throw new ApiError(res.status, body.error ?? "error", body.message ?? res.statusText);
+    return body as T;
+  }
+
+  me(user: TgUser) {
+    return this.request<Me>("/me", { user });
+  }
+
+  setLanguage(user: TgUser, language: Lang) {
+    return this.request("/me", {
+      method: "PATCH",
+      user,
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ language }),
+    });
+  }
+
+  checkText(user: TgUser, text: string, lang: Lang) {
+    return this.request<CheckResult>("/checks", {
+      method: "POST",
+      user,
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ text, lang }),
+    });
+  }
+
+  checkImages(user: TgUser, images: ImageFile[], text: string | undefined, lang: Lang) {
+    const form = new FormData();
+    form.append("lang", lang);
+    if (text) form.append("text", text);
+    images.forEach((img, i) =>
+      form.append("images", new Blob([img.data], { type: img.mediaType }), `screenshot-${i}.jpg`),
+    );
+    return this.request<CheckResult>("/checks", { method: "POST", user, body: form });
+  }
+
+  getCheck(id: string) {
+    return this.request<CheckResult>(`/checks/${encodeURIComponent(id)}`, {});
+  }
+}

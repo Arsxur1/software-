@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "priceBelowMarketPct": 30,
+  "newAccountDays": 3,
+  "aiAdjustmentMax": 15,
+  "levels": { "medium": 30, "high": 60 },
+  "weights": {
+    "price_below_market": 30,
+    "prepayment": 30,
+    "other_city_or_shipping": 15,
+    "stock_or_duplicate_photos": 20,
+    "new_account": 10,
+    "urgency": 10,
+    "verified_shop": -30,
+    "good_platform_sales": -20
+  }
+}

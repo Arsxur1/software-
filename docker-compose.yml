@@ -1,0 +1,69 @@
+# Stack for a single VPS in Uzbekistan (personal data stays in-country).
+# Put a TLS reverse proxy (Caddy / nginx + Let's Encrypt) in front of `miniapp`:
+# Telegram requires HTTPS for Mini Apps.
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ishonch
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ishonch}
+      POSTGRES_DB: ishonch
+    volumes: [pgdata:/var/lib/postgresql/data]
+    ports: ["127.0.0.1:5432:5432"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ishonch"]
+      interval: 5s
+      retries: 10
+
+  # Photo storage for listings (module D). Started now so the stack is complete.
+  minio:
+    image: minio/minio:latest
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-ishonch}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-ishonch-secret}
+    volumes: [miniodata:/data]
+    ports: ["127.0.0.1:9000:9000", "127.0.0.1:9001:9001"]
+
+  minio-init:
+    image: minio/mc:latest
+    depends_on: [minio]
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-ishonch}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-ishonch-secret}
+      MINIO_BUCKET: ${MINIO_BUCKET:-ishonch-photos}
+    entrypoint: >
+      sh -c "until mc alias set local http://minio:9000 $$MINIO_ROOT_USER $$MINIO_ROOT_PASSWORD; do sleep 2; done;
+             mc mb --ignore-existing local/$$MINIO_BUCKET"
+
+  api:
+    build: { context: ., target: api }
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: postgres://ishonch:${POSTGRES_PASSWORD:-ishonch}@postgres:5432/ishonch
+      LOG_FILE: /app/logs/api.log
+    volumes: ["./logs:/app/logs"]
+    depends_on:
+      postgres: { condition: service_healthy }
+    ports: ["127.0.0.1:3000:3000"]
+
+  bot:
+    build: { context: ., target: bot }
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      API_URL: http://api:3000
+    depends_on: [api]
+
+  miniapp:
+    build: { context: ., dockerfile: apps/miniapp/Dockerfile }
+    restart: unless-stopped
+    depends_on: [api]
+    ports: ["${MINIAPP_PORT:-8080}:80"]
+
+volumes:
+  pgdata:
+  miniodata:

@@ -1,0 +1,96 @@
+:root {
+  --bg: var(--tg-theme-bg-color, #ffffff);
+  --bg2: var(--tg-theme-secondary-bg-color, #f2f3f5);
+  --text: var(--tg-theme-text-color, #111418);
+  --hint: var(--tg-theme-hint-color, #6b7380);
+  --link: var(--tg-theme-link-color, #1a73e8);
+  --button: var(--tg-theme-button-color, #1f8f5f);
+  --button-text: var(--tg-theme-button-text-color, #ffffff);
+  --danger: var(--tg-theme-destructive-text-color, #d93025);
+  --low: #1f8f5f;
+  --medium: #c98a00;
+  --high: #d93025;
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: var(--tg-theme-bg-color, #17212b);
+    --bg2: var(--tg-theme-secondary-bg-color, #0e1621);
+    --text: var(--tg-theme-text-color, #f5f5f5);
+    --hint: var(--tg-theme-hint-color, #8b98a5);
+  }
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg2); color: var(--text); }
+body { font: 15px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+
+.app { max-width: 640px; margin: 0 auto; padding: 16px; }
+.stack { display: flex; flex-direction: column; gap: 12px; }
+.center { text-align: center; align-items: center; }
+.row { display: flex; gap: 8px; align-items: center; }
+.between { justify-content: space-between; }
+h1 { font-size: 22px; margin: 0; }
+h2 { font-size: 19px; margin: 0; }
+h3 { font-size: 15px; margin: 0 0 6px; }
+h4 { font-size: 14px; margin: 8px 0 4px; }
+p { margin: 0; }
+ul, ol { margin: 0; padding-left: 20px; }
+li { margin: 2px 0; }
+.hint { color: var(--hint); font-size: 13px; display: block; }
+.error { color: var(--danger); }
+.disclaimer { color: var(--hint); font-size: 12px; font-style: italic; text-align: center; }
+
+.card { background: var(--bg); border-radius: 12px; padding: 12px 14px; }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 420px) { .two-col { grid-template-columns: 1fr; } }
+
+button { font: inherit; cursor: pointer; }
+button.primary {
+  background: var(--button); color: var(--button-text); border: 0; border-radius: 10px;
+  padding: 12px 16px; font-weight: 600; width: 100%;
+}
+button.primary:disabled { opacity: 0.5; }
+button.link { background: none; border: 0; color: var(--link); padding: 4px 0; text-align: left; }
+button.link.danger { color: var(--danger); font-size: 13px; margin-top: 16px; }
+
+.tile {
+  display: flex; gap: 12px; align-items: center; text-align: left; width: 100%;
+  background: var(--bg); color: var(--text); border: 0; border-radius: 14px; padding: 14px;
+}
+.tile:disabled { opacity: 0.55; cursor: default; }
+.tile strong { display: block; }
+.tile-icon { font-size: 28px; }
+.primary-tile { outline: 2px solid var(--button); }
+
+.lang-switch { display: flex; background: var(--bg); border-radius: 8px; padding: 2px; }
+.lang-switch button { border: 0; background: none; color: var(--hint); padding: 6px 10px; border-radius: 6px; }
+.lang-switch button.active { background: var(--button); color: var(--button-text); }
+
+textarea {
+  width: 100%; border: 1px solid transparent; border-radius: 12px; padding: 12px;
+  background: var(--bg); color: var(--text); font: inherit; resize: vertical;
+}
+.file-picker {
+  display: block; text-align: center; padding: 12px; border: 1px dashed var(--hint);
+  border-radius: 12px; color: var(--link); cursor: pointer; background: var(--bg);
+}
+.file-picker input { display: none; }
+.thumbs { display: flex; gap: 8px; flex-wrap: wrap; }
+.thumb { padding: 0; border: 0; border-radius: 8px; overflow: hidden; width: 64px; height: 64px; }
+.thumb img { width: 100%; height: 100%; object-fit: cover; }
+
+.verdict { font-weight: 600; font-size: 16px; }
+.verdict-below { color: var(--medium); }
+.verdict-market { color: var(--low); }
+.verdict-above { color: var(--medium); }
+.risk-level { font-weight: 700; font-size: 18px; }
+.risk-low { border-left: 5px solid var(--low); }
+.risk-medium { border-left: 5px solid var(--medium); }
+.risk-high { border-left: 5px solid var(--high); }
+.risk-high .risk-level { color: var(--high); }
+.flags { list-style: none; padding-left: 0; }
+.checklist { list-style: none; padding-left: 0; }
+.links { list-style: none; padding: 0; }
+a { color: var(--link); }

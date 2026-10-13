@@ -1,0 +1,24 @@
+{
+  "name": "ishonch",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.28.0",
+  "scripts": {
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck",
+    "test": "vitest run",
+    "test:ai": "RUN_LIVE_AI=1 vitest run apps/api/test/live",
+    "dev:api": "pnpm --filter @ishonch/api dev",
+    "dev:bot": "pnpm --filter @ishonch/bot dev",
+    "dev:miniapp": "pnpm --filter @ishonch/miniapp dev",
+    "db:generate": "pnpm --filter @ishonch/api db:generate",
+    "db:migrate": "pnpm --filter @ishonch/api db:migrate",
+    "db:seed": "pnpm --filter @ishonch/api db:seed"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^3.0.0"
+  }
+}

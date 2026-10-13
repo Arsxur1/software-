@@ -1,0 +1,114 @@
+[
+  {
+    "name": "iphone13_prepay_ru",
+    "lang": "ru",
+    "input": "Срочно продаю iPhone 13 128GB, состояние идеал, АКБ 89%. Цена 3,5 млн. Я сейчас в Самарканде, отправлю почтой, нужна предоплата 50% на карту. Желающих много!",
+    "expect": {
+      "category": "smartphone",
+      "model_key_contains": "iphone 13",
+      "prepayment": true,
+      "shipping_or_other_city": true,
+      "urgency": true,
+      "risk_level": "high"
+    },
+    "mock_extract": {
+      "is_listing": true,
+      "category": "smartphone",
+      "brand": "Apple",
+      "model": "iPhone 13",
+      "model_key": "apple iphone 13 128gb",
+      "specs": ["128 GB", "battery 89%"],
+      "condition": "like_new",
+      "price_amount": 3500000,
+      "price_currency": "UZS",
+      "city": "Samarkand",
+      "seller_signals": { "prepayment": true, "other_city": true, "shipping_only": true, "urgency": true, "stock_photos": false, "no_meeting": true },
+      "suspicious_phrases": ["asks for 50% prepayment to a card", "will send by post"],
+      "ai_market_estimate_uzs": { "min": 5200000, "max": 6500000 }
+    }
+  },
+  {
+    "name": "iphone13_honest_uz",
+    "lang": "uz",
+    "input": "iPhone 13 128gb sotiladi. Holati yaxshi, batareya 86%, qutisi va hujjatlari bor. Narxi 5 800 000 so'm. Chilonzorda ko'rishib olsa bo'ladi.",
+    "expect": { "category": "smartphone", "model_key_contains": "iphone 13", "prepayment": false, "risk_level": "low" },
+    "mock_extract": {
+      "is_listing": true,
+      "category": "smartphone",
+      "brand": "Apple",
+      "model": "iPhone 13",
+      "model_key": "apple iphone 13 128gb",
+      "specs": ["128 GB", "battery 86%", "box and documents"],
+      "condition": "good",
+      "price_amount": 5800000,
+      "price_currency": "UZS",
+      "city": "Tashkent",
+      "seller_signals": { "prepayment": false, "other_city": false, "shipping_only": false, "urgency": false, "stock_photos": false, "no_meeting": false },
+      "suspicious_phrases": [],
+      "ai_market_estimate_uzs": { "min": 5200000, "max": 6500000 }
+    }
+  },
+  {
+    "name": "samsung_a54_usd_ru",
+    "lang": "ru",
+    "input": "Samsung Galaxy A54 256 ГБ, 230$, торг уместен, без коробки, царапина на задней крышке. Юнусабад.",
+    "expect": { "category": "smartphone", "model_key_contains": "a54", "prepayment": false, "risk_level": "low" },
+    "mock_extract": {
+      "is_listing": true,
+      "category": "smartphone",
+      "brand": "Samsung",
+      "model": "Galaxy A54",
+      "model_key": "samsung galaxy a54 256gb",
+      "specs": ["256 GB"],
+      "condition": "fair",
+      "price_amount": 230,
+      "price_currency": "USD",
+      "city": "Tashkent",
+      "seller_signals": { "prepayment": false, "other_city": false, "shipping_only": false, "urgency": false, "stock_photos": false, "no_meeting": false },
+      "suspicious_phrases": [],
+      "ai_market_estimate_uzs": { "min": 2600000, "max": 3300000 }
+    }
+  },
+  {
+    "name": "macbook_air_m1_zaklad_uz",
+    "lang": "uz",
+    "input": "MacBook Air M1 8/256 yangi kabi, 4 mln so'm. Bugun oxirgi kun! Zakladga 500 ming kartaga tashlang, keyin olib kelaman.",
+    "expect": { "category": "laptop", "model_key_contains": "macbook air", "prepayment": true, "urgency": true, "risk_level": "high" },
+    "mock_extract": {
+      "is_listing": true,
+      "category": "laptop",
+      "brand": "Apple",
+      "model": "MacBook Air M1",
+      "model_key": "apple macbook air m1 256gb",
+      "specs": ["8 GB RAM", "256 GB SSD"],
+      "condition": "like_new",
+      "price_amount": 4000000,
+      "price_currency": "UZS",
+      "city": null,
+      "seller_signals": { "prepayment": true, "other_city": false, "shipping_only": true, "urgency": true, "stock_photos": false, "no_meeting": true },
+      "suspicious_phrases": ["asks for a deposit to a card before delivery", "today is the last day"],
+      "ai_market_estimate_uzs": { "min": 7000000, "max": 8800000 }
+    }
+  },
+  {
+    "name": "airpods_pro2_description_ru",
+    "lang": "ru",
+    "input": "Продают AirPods Pro 2 за 1,9 млн, новые запечатанные, продавец говорит что из Дубая.",
+    "expect": { "category": "headphones", "model_key_contains": "airpods pro", "prepayment": false, "risk_level": "low" },
+    "mock_extract": {
+      "is_listing": true,
+      "category": "headphones",
+      "brand": "Apple",
+      "model": "AirPods Pro 2",
+      "model_key": "apple airpods pro 2",
+      "specs": ["sealed"],
+      "condition": "new",
+      "price_amount": 1900000,
+      "price_currency": "UZS",
+      "city": null,
+      "seller_signals": { "prepayment": false, "other_city": false, "shipping_only": false, "urgency": false, "stock_photos": false, "no_meeting": false },
+      "suspicious_phrases": [],
+      "ai_market_estimate_uzs": { "min": 2200000, "max": 2900000 }
+    }
+  }
+]
