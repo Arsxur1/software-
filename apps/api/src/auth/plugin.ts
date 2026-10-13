@@ -7,6 +7,8 @@ import { validateInitData, type TelegramUser } from "./telegram.js";
 declare module "fastify" {
   interface FastifyRequest {
     user?: User;
+    /** "tma" = Mini App (signed initData), "internal" = our bot acting for the user. */
+    authVia?: "tma" | "internal";
   }
 }
 
@@ -30,20 +32,26 @@ function safeEqual(a: string, b: string) {
  */
 export function makeAuth(opts: AuthOptions) {
   async function resolveTelegramUser(req: FastifyRequest): Promise<TelegramUser | null> {
+    const res = await resolve(req);
+    req.authVia = res?.via;
+    return res?.user ?? null;
+  }
+
+  async function resolve(req: FastifyRequest): Promise<{ user: TelegramUser; via: "tma" | "internal" } | null> {
     const header = req.headers.authorization ?? "";
     const [scheme, ...rest] = header.split(" ");
     const value = rest.join(" ");
     if (scheme === "tma" && value && opts.botToken) {
       const res = validateInitData(value, opts.botToken, opts.maxAgeSec);
       if (!res.ok) req.log.info({ reason: res.reason }, "initData rejected");
-      return res.ok ? res.user : null;
+      return res.ok ? { user: res.user, via: "tma" } : null;
     }
     if (scheme === "Internal" && value && safeEqual(value, opts.internalToken)) {
       const raw = req.headers["x-telegram-user"];
       if (typeof raw !== "string") return null;
       try {
         const u = JSON.parse(raw) as TelegramUser;
-        return typeof u.id === "number" ? u : null;
+        return typeof u.id === "number" ? { user: u, via: "internal" } : null;
       } catch {
         return null;
       }
@@ -67,5 +75,18 @@ export function makeAuth(opts: AuthOptions) {
     };
   }
 
-  return { requireUser, requireRole };
+  /** Only our bot may call these (e.g. it has verified a contact or a channel admin event). */
+  async function requireInternal(req: FastifyRequest, reply: FastifyReply) {
+    await requireUser(req, reply);
+    if (reply.sent) return;
+    if (req.authVia !== "internal") return reply.code(403).send({ error: "forbidden" });
+  }
+
+  /** Optional auth: sets req.user when credentials are valid, never rejects. */
+  async function optionalUser(req: FastifyRequest) {
+    const tg = await resolveTelegramUser(req);
+    if (tg) req.user = await opts.repo.upsertTelegramUser(tg);
+  }
+
+  return { requireUser, requireRole, requireInternal, optionalUser };
 }

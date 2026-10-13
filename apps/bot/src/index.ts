@@ -18,6 +18,7 @@ await bot.init();
 await bot.api.setMyCommands([
   { command: "start", description: "Ishonch" },
   { command: "help", description: "Yordam / Помощь" },
+  { command: "sell", description: "Sotish / Продать" },
   { command: "lang", description: "Til / Язык" },
 ]);
 await bot.api.setChatMenuButton({
@@ -27,4 +28,4 @@ await bot.api.setChatMenuButton({
 process.once("SIGINT", () => bot.stop());
 process.once("SIGTERM", () => bot.stop());
 console.log(`bot @${bot.botInfo.username} started`);
-await bot.start({ drop_pending_updates: true });
+await bot.start({ drop_pending_updates: true, allowed_updates: ["message", "callback_query", "my_chat_member"] });

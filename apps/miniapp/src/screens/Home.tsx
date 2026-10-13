@@ -3,12 +3,12 @@ import { useLang, useT } from "../i18n";
 
 interface Props {
   remaining: number;
-  onOpenCheck: () => void;
+  onOpen: (screen: "check" | "sell" | "my" | "shop") => void;
   onLanguage: (lang: Lang) => void;
   onDeleteAccount: () => void;
 }
 
-export function Home({ remaining, onOpenCheck, onLanguage, onDeleteAccount }: Props) {
+export function Home({ remaining, onOpen, onLanguage, onDeleteAccount }: Props) {
   const t = useT();
   const lang = useLang();
   return (
@@ -27,7 +27,7 @@ export function Home({ remaining, onOpenCheck, onLanguage, onDeleteAccount }: Pr
         </div>
       </header>
 
-      <button className="tile primary-tile" onClick={onOpenCheck} data-testid="open-check">
+      <button className="tile primary-tile" onClick={() => onOpen("check")} data-testid="open-check">
         <span className="tile-icon">🔎</span>
         <span>
           <strong>{t("home.tekshir.title")}</strong>
@@ -36,19 +36,37 @@ export function Home({ remaining, onOpenCheck, onLanguage, onDeleteAccount }: Pr
         </span>
       </button>
 
-      <button className="tile" disabled>
-        <span className="tile-icon">🛍️</span>
+      <button className="tile" onClick={() => onOpen("sell")} data-testid="open-sell">
+        <span className="tile-icon">📸</span>
         <span>
-          <strong>{t("home.catalog.title")}</strong>
-          <span className="hint">{t("home.catalog.desc")} · {t("common.soon")}</span>
+          <strong>{t("home.sell.title")}</strong>
+          <span className="hint">{t("home.sell.desc_ready")}</span>
+        </span>
+      </button>
+
+      <button className="tile" onClick={() => onOpen("my")} data-testid="open-my">
+        <span className="tile-icon">📋</span>
+        <span>
+          <strong>{t("home.my.title")}</strong>
+          <span className="hint">{t("home.my.desc")}</span>
+        </span>
+      </button>
+
+      <button className="tile" onClick={() => onOpen("shop")}>
+        <span className="tile-icon">🏪</span>
+        <span>
+          <strong>{t("home.shop.title")}</strong>
+          <span className="hint">{t("home.shop.desc")}</span>
         </span>
       </button>
 
       <button className="tile" disabled>
-        <span className="tile-icon">📸</span>
+        <span className="tile-icon">🛍️</span>
         <span>
-          <strong>{t("home.sell.title")}</strong>
-          <span className="hint">{t("home.sell.desc")} · {t("common.soon")}</span>
+          <strong>{t("home.catalog.title")}</strong>
+          <span className="hint">
+            {t("home.catalog.desc")} · {t("common.soon")}
+          </span>
         </span>
       </button>
 

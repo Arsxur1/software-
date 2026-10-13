@@ -1,14 +1,34 @@
 import { useEffect, useMemo, useState } from "react";
-import { normalizeLang, type Lang } from "@ishonch/shared";
+import { normalizeLang, type Lang, type ListingDto } from "@ishonch/shared";
+import { t } from "@ishonch/shared/i18n";
 import { createApi, type Me } from "./api";
 import { LangContext } from "./i18n";
 import { Check } from "./screens/Check";
 import { Home } from "./screens/Home";
+import { ListingView } from "./screens/ListingView";
+import { MyListings } from "./screens/MyListings";
+import { Sell } from "./screens/Sell";
+import { Shop } from "./screens/Shop";
 import { Terms } from "./screens/Terms";
 import { setBackButton, type TelegramEnv } from "./telegram";
-import { t } from "@ishonch/shared/i18n";
 
-type Screen = "home" | "check";
+type Screen =
+  | { name: "home" }
+  | { name: "check" }
+  | { name: "sell"; existing?: ListingDto }
+  | { name: "my" }
+  | { name: "shop" }
+  | { name: "listing"; id: string };
+
+/** Start params: `listing_<uuid>` (channel button), `screen_sell` / `screen_my` (bot buttons). */
+function initialScreen(startParam?: string): Screen {
+  const m = startParam?.match(/^listing_([0-9a-f-]{36})$/i);
+  if (m) return { name: "listing", id: m[1]! };
+  if (startParam === "screen_sell") return { name: "sell" };
+  if (startParam === "screen_my") return { name: "my" };
+  if (startParam === "screen_check") return { name: "check" };
+  return { name: "home" };
+}
 
 export function App({ env }: { env: TelegramEnv }) {
   const api = useMemo(() => createApi(env.initData), [env.initData]);
@@ -16,8 +36,9 @@ export function App({ env }: { env: TelegramEnv }) {
   const [lang, setLang] = useState<Lang>(normalizeLang(env.languageCode));
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [screen, setScreen] = useState<Screen>("home");
+  const [screen, setScreen] = useState<Screen>(() => initialScreen(env.startParam));
   const [deleted, setDeleted] = useState(false);
+  const home = () => setScreen({ name: "home" });
 
   useEffect(() => {
     api
@@ -30,7 +51,7 @@ export function App({ env }: { env: TelegramEnv }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [api]);
 
-  useEffect(() => setBackButton(screen === "home" ? null : () => setScreen("home")), [screen]);
+  useEffect(() => setBackButton(screen.name === "home" ? null : home), [screen]);
 
   async function acceptTerms() {
     setBusy(true);
@@ -55,26 +76,65 @@ export function App({ env }: { env: TelegramEnv }) {
   else if (error) content = <p className="error center">{error}</p>;
   else if (!me) content = <p className="center hint">{t(lang, "common.loading")}</p>;
   else if (!me.acceptedTerms) content = <Terms onAccept={acceptTerms} busy={busy} />;
-  else if (screen === "check")
-    content = (
-      <>
-        <button className="link" onClick={() => setScreen("home")}>← {t(lang, "common.back")}</button>
-        <Check
-          api={api}
-          remaining={me.checks.remaining}
-          onDone={(remaining) => setMe({ ...me, checks: { ...me.checks, remaining } })}
-        />
-      </>
-    );
-  else
-    content = (
-      <Home
-        remaining={me.checks.remaining}
-        onOpenCheck={() => setScreen("check")}
-        onLanguage={changeLanguage}
-        onDeleteAccount={deleteAccount}
-      />
-    );
+  else {
+    let body;
+    switch (screen.name) {
+      case "check":
+        body = (
+          <Check
+            api={api}
+            remaining={me.checks.remaining}
+            onDone={(remaining) => setMe({ ...me, checks: { ...me.checks, remaining } })}
+          />
+        );
+        break;
+      case "sell":
+        body = (
+          <Sell
+            key={screen.existing?.id ?? "new"}
+            api={api}
+            existing={screen.existing}
+            onDone={() => setScreen({ name: "my" })}
+          />
+        );
+        break;
+      case "my":
+        body = (
+          <MyListings
+            api={api}
+            onEdit={(l) => setScreen({ name: "sell", existing: l })}
+            onOpen={(id) => setScreen({ name: "listing", id })}
+          />
+        );
+        break;
+      case "shop":
+        body = <Shop api={api} />;
+        break;
+      case "listing":
+        body = <ListingView api={api} id={screen.id} />;
+        break;
+      default:
+        body = (
+          <Home
+            remaining={me.checks.remaining}
+            onOpen={(name) => setScreen({ name } as Screen)}
+            onLanguage={changeLanguage}
+            onDeleteAccount={deleteAccount}
+          />
+        );
+    }
+    content =
+      screen.name === "home" ? (
+        body
+      ) : (
+        <>
+          <button className="link" onClick={home}>
+            ← {t(lang, "common.back")}
+          </button>
+          {body}
+        </>
+      );
+  }
 
   return (
     <LangContext.Provider value={lang}>

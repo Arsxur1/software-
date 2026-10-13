@@ -52,6 +52,10 @@ export class Repo {
     await this.db.update(users).set({ language: lang }).where(eq(users.id, userId));
   }
 
+  async setPhone(userId: string, phone: string) {
+    await this.db.update(users).set({ phone }).where(eq(users.id, userId));
+  }
+
   async acceptTerms(userId: string) {
     await this.db.update(users).set({ acceptedTermsAt: new Date() }).where(eq(users.id, userId));
   }

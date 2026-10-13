@@ -1,10 +1,11 @@
 import type { FastifyInstance, preHandlerHookHandler } from "fastify";
 import { LANGS, t, type Lang } from "@ishonch/shared";
 import { CheckRejected, CheckService, MAX_IMAGES } from "./service.js";
+import sharp from "sharp";
 import type { CheckImage } from "./pipeline.js";
 
-const IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
-export const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+const IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif", "image/heic"]);
+export const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 
 export function checkRoutes(app: FastifyInstance, service: CheckService, requireUser: preHandlerHookHandler) {
   app.get("/checks/limit", { preHandler: requireUser }, async (req) => service.limitInfo(req.user!));
@@ -20,7 +21,14 @@ export function checkRoutes(app: FastifyInstance, service: CheckService, require
         if (part.type === "file") {
           const buf = await part.toBuffer();
           if (!IMAGE_TYPES.has(part.mimetype)) continue;
-          images.push({ mediaType: part.mimetype as CheckImage["mediaType"], base64: buf.toString("base64") });
+          // Screenshots are often 3–4k px tall: downscale to cut AI tokens; the original is never stored.
+          const jpeg = await sharp(buf)
+            .rotate()
+            .resize({ width: 1568, height: 1568, fit: "inside", withoutEnlargement: true })
+            .jpeg({ quality: 80 })
+            .toBuffer()
+            .catch(() => null);
+          if (jpeg) images.push({ mediaType: "image/jpeg", base64: jpeg.toString("base64") });
         } else if (part.fieldname === "text") {
           text = String(part.value);
         } else if (part.fieldname === "lang") {

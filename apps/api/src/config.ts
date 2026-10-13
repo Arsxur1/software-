@@ -27,6 +27,24 @@ const EnvSchema = z.object({
   INIT_DATA_MAX_AGE_SEC: z.coerce.number().default(24 * 3600),
   CORS_ORIGIN: z.string().default("*"),
   LOG_FILE: z.string().optional(),
+  // Photo storage: "s3" (MinIO) in production, "fs" for local development and tests.
+  STORAGE_DRIVER: z.enum(["s3", "fs"]).default("fs"),
+  STORAGE_DIR: z.string().default("./data/storage"),
+  MINIO_ENDPOINT: z.string().default("http://localhost:9000"),
+  MINIO_ROOT_USER: z.string().default("ishonch"),
+  MINIO_ROOT_PASSWORD: z.string().default("ishonch-secret"),
+  MINIO_BUCKET: z.string().default("ishonch-photos"),
+  // Speech-to-text (Whisper-compatible HTTP API). Empty STT_URL disables voice input.
+  STT_URL: z.string().default(""),
+  STT_API_KEY: z.string().optional(),
+  STT_MODEL: z.string().default("whisper-1"),
+  // e.g. https://t.me/ishonch_bot/app ; when empty, https://t.me/<bot>?startapp=... is used
+  MINIAPP_LINK: z.string().optional(),
+  PHOTO_URL_SECRET: z.string().optional(),
+  COD_PLATFORM_ENABLED: z
+    .string()
+    .default("false")
+    .transform((v) => v === "true"),
 });
 
 export type Config = z.infer<typeof EnvSchema>;

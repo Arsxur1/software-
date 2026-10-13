@@ -112,6 +112,15 @@ export function createBot(cfg: BotConfig, api: ApiClient) {
     });
   });
 
+  bot.command("sell", async (ctx) => {
+    const user = tgUser(ctx);
+    if (!user) return;
+    const lang = await langOf(user);
+    await ctx.reply(t(lang, "home.sell.desc_ready"), {
+      reply_markup: new InlineKeyboard().webApp(t(lang, "home.sell.title"), `${cfg.miniAppUrl}?screen=sell`),
+    });
+  });
+
   bot.command("help", async (ctx) => {
     const user = tgUser(ctx);
     if (user) await ctx.reply(t(await langOf(user), "bot.help"));
@@ -130,6 +139,50 @@ export function createBot(cfg: BotConfig, api: ApiClient) {
     await ctx.answerCallbackQuery({ text: t(lang, "bot.language_set") });
     await ctx.reply(t(lang, "bot.help"), {
       reply_markup: new InlineKeyboard().webApp(t(lang, "bot.open_app"), cfg.miniAppUrl),
+    });
+  });
+
+  // ---- module D: seller's channel (bot added/removed as channel admin) ----
+  bot.on("my_chat_member", async (ctx) => {
+    const upd = ctx.myChatMember;
+    if (upd.chat.type !== "channel") return;
+    const user: TgUser = { id: upd.from.id, language_code: upd.from.language_code };
+    const lang = await langOf(user);
+    const title = upd.chat.title;
+    const member = upd.new_chat_member;
+    const notify = (text: string) => ctx.api.sendMessage(user.id, text).catch(() => undefined);
+
+    if (member.status === "administrator") {
+      if (!member.can_post_messages) return notify(t(lang, "bot.channel_need_post_rights", { title }));
+      await api.linkChannel(user, upd.chat.id, title);
+      return notify(t(lang, "bot.channel_linked", { title }));
+    }
+    if (member.status === "left" || member.status === "kicked" || member.status === "member") {
+      // The channel belongs to whoever linked it; removal by any admin unlinks it.
+      await api.unlinkChannel(user, upd.chat.id).catch(() => undefined);
+      return notify(t(lang, "bot.channel_unlinked", { title }));
+    }
+  });
+
+  // ---- phone shared via Telegram (requestPhoneAccess in the Mini App, or the contact button) ----
+  bot.on("message:contact", async (ctx) => {
+    const user = tgUser(ctx);
+    if (!user) return;
+    const lang = await langOf(user);
+    const c = ctx.message.contact;
+    if (c.user_id !== ctx.from.id) return ctx.reply(t(lang, "bot.phone_not_own"));
+    await api.setPhone(user, c.phone_number);
+    await ctx.reply(t(lang, "bot.phone_saved"), {
+      reply_markup: new InlineKeyboard().webApp(t(lang, "bot.open_app"), `${cfg.miniAppUrl}?screen=sell`),
+    });
+  });
+
+  bot.on(["message:voice", "message:audio"], async (ctx) => {
+    const user = tgUser(ctx);
+    if (!user) return;
+    const lang = await langOf(user);
+    await ctx.reply(t(lang, "bot.voice_use_app"), {
+      reply_markup: new InlineKeyboard().webApp(t(lang, "home.sell.title"), `${cfg.miniAppUrl}?screen=sell`),
     });
   });
 

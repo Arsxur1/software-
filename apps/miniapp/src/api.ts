@@ -1,4 +1,4 @@
-import type { CheckResult, Lang } from "@ishonch/shared";
+import type { CheckResult, Lang, ListingDto, ListingStatus } from "@ishonch/shared";
 
 const BASE = import.meta.env.VITE_API_URL ?? "/api";
 
@@ -7,6 +7,7 @@ export interface Me {
   language: Lang;
   role: string;
   acceptedTerms: boolean;
+  hasPhone: boolean;
   checks: { perDay: number; remaining: number };
 }
 
@@ -15,10 +16,23 @@ export class ApiError extends Error {
     public status: number,
     public code: string,
     message: string,
+    public params: Record<string, string | number> = {},
   ) {
     super(message);
   }
 }
+
+export interface ShopInfo {
+  shop: { id: string; name: string; marketLocation: string | null; hasPhoto: boolean; verified: boolean } | null;
+  channels: Array<{ id: number; telegramChannelId: number; title: string }>;
+}
+
+export type ListingPatch = Partial<
+  Pick<ListingDto, "titleRu" | "titleUz" | "descriptionRu" | "descriptionUz" | "price" | "condition" | "district" | "allowedDeliveryModes" | "feePayer">
+>;
+
+/** Absolute URL for API-relative paths such as signed photo URLs. */
+export const apiUrl = (path: string) => `${BASE}${path}`;
 
 export function createApi(initData: string | null) {
   async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
@@ -27,7 +41,7 @@ export function createApi(initData: string | null) {
       headers: { ...(initData ? { authorization: `tma ${initData}` } : {}), ...init.headers },
     });
     const body = await res.json().catch(() => ({}));
-    if (!res.ok) throw new ApiError(res.status, body.error ?? "error", body.message ?? res.statusText);
+    if (!res.ok) throw new ApiError(res.status, body.error ?? "error", body.message ?? res.statusText, body.params);
     return body as T;
   }
   const json = (method: string, data: unknown): RequestInit => ({
@@ -49,6 +63,44 @@ export function createApi(initData: string | null) {
       return request<CheckResult>("/checks", { method: "POST", body: form });
     },
     getCheck: (id: string) => request<CheckResult>(`/checks/${encodeURIComponent(id)}`),
+
+    // ---- seller cabinet ----
+    createDraft: (photos: Blob[], audio: Blob | null, text: string) => {
+      const form = new FormData();
+      photos.forEach((p, i) => form.append("photos", p, `photo-${i}.jpg`));
+      if (audio) form.append("audio", audio, `voice.${audio.type.includes("mp4") ? "m4a" : "webm"}`);
+      if (text.trim()) form.append("text", text.trim());
+      return request<ListingDto>("/listings/drafts", { method: "POST", body: form });
+    },
+    generate: (id: string, answers: Record<string, string>) =>
+      request<ListingDto>(`/listings/${id}/generate`, json("POST", { answers })),
+    updateListing: (id: string, patch: ListingPatch) => request<ListingDto>(`/listings/${id}`, json("PATCH", patch)),
+    addPhotos: (id: string, photos: Blob[]) => {
+      const form = new FormData();
+      photos.forEach((p, i) => form.append("photos", p, `photo-${i}.jpg`));
+      return request<ListingDto>(`/listings/${id}/photos`, { method: "POST", body: form });
+    },
+    deletePhoto: (id: string, photoId: number) => request<ListingDto>(`/listings/${id}/photos/${photoId}`, { method: "DELETE" }),
+    publish: (id: string, channelIds: number[]) =>
+      request<{ listing: ListingDto; postedChannels: number; failedChannels: number }>(
+        `/listings/${id}/publish`,
+        json("POST", { channelIds }),
+      ),
+    myListings: (status: ListingStatus) => request<ListingDto[]>(`/listings/mine?status=${status}`),
+    listing: (id: string) => request<ListingDto>(`/listings/${encodeURIComponent(id)}`),
+    markSold: (id: string, via: "platform" | "elsewhere") => request<ListingDto>(`/listings/${id}/sold`, json("POST", { via })),
+    archive: (id: string) => request<ListingDto>(`/listings/${id}/archive`, { method: "POST" }),
+    bump: (id: string) => request<ListingDto>(`/listings/${id}/bump`, { method: "POST" }),
+    deleteDraft: (id: string) => request(`/listings/${id}`, { method: "DELETE" }),
+    shop: () => request<ShopInfo>("/shops/mine"),
+    saveShop: (name: string, marketLocation: string) =>
+      request<ShopInfo["shop"]>("/shops/mine", json("PUT", { name, marketLocation: marketLocation || null })),
+    shopPhoto: (photo: Blob) => {
+      const form = new FormData();
+      form.append("photo", photo, "shop.jpg");
+      return request<ShopInfo["shop"]>("/shops/mine/photo", { method: "POST", body: form });
+    },
+    unlinkChannel: (id: number) => request(`/channels/${id}`, { method: "DELETE" }),
   };
 }
 

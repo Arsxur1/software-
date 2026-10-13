@@ -1,0 +1,130 @@
+[
+  {
+    "name": "iphone12_voice_uz",
+    "lang": "uz",
+    "input": "Assalomu alaykum, iPhone 12 sotaman, 128 gigabayt, batareya 84 foiz, qutisi bor, zaryadkasi yo'q. Orqa qopqog'ida kichik tirnalish bor. Hech qachon ochilmagan.",
+    "answers": {},
+    "expect": { "category": "smartphone", "model_key_contains": "iphone 12", "max_questions": 1, "must_mention": ["128"], "forbidden": ["гарантия", "kafolat", "AppleCare"] },
+    "mock_analysis": {
+      "category": "smartphone",
+      "brand": "Apple",
+      "model": "iPhone 12",
+      "model_key": "apple iphone 12 128gb",
+      "specs": [{ "name": "storage", "value": "128 GB" }, { "name": "battery_health", "value": "84%" }, { "name": "kit", "value": "box, no charger" }],
+      "condition": "good",
+      "visible_defects": [],
+      "questions": [],
+      "photo_hints": [{ "ru": "Добавьте фото экрана во включённом состоянии", "uz": "Yoqilgan ekran suratini qo'shing" }],
+      "ai_market_estimate_uzs": { "min": 3600000, "max": 4800000 }
+    },
+    "mock_text": {
+      "title_ru": "iPhone 12 128 ГБ, хорошее состояние",
+      "title_uz": "iPhone 12 128 GB, yaxshi holatda",
+      "description_ru": "Продаю iPhone 12 на 128 ГБ.\nАккумулятор 84%, не вскрывался.\nНебольшая царапина на задней крышке.\nВ комплекте коробка, без зарядки.",
+      "description_uz": "iPhone 12 128 GB sotiladi.\nBatareya 84%, hech qachon ochilmagan.\nOrqa qopqog'ida kichik tirnalish bor.\nQutisi bor, zaryadlovchisiz."
+    }
+  },
+  {
+    "name": "samsung_a54_photo_only_ru",
+    "lang": "ru",
+    "input": "",
+    "answers": { "storage": "256 ГБ", "kit": "Только телефон" },
+    "expect": { "category": "smartphone", "model_key_contains": "a54", "max_questions": 3, "must_mention": [], "forbidden": ["гарантия", "kafolat"] },
+    "mock_analysis": {
+      "category": "smartphone",
+      "brand": "Samsung",
+      "model": "Galaxy A54",
+      "model_key": "samsung galaxy a54",
+      "specs": [{ "name": "color", "value": "lime" }],
+      "condition": "like_new",
+      "visible_defects": [],
+      "questions": [
+        { "key": "storage", "question_ru": "Сколько памяти?", "question_uz": "Xotirasi qancha?", "options": ["128 ГБ", "256 ГБ"] },
+        { "key": "kit", "question_ru": "Что в комплекте?", "question_uz": "Komplektda nima bor?", "options": ["Коробка и зарядка", "Только телефон"] }
+      ],
+      "photo_hints": [],
+      "ai_market_estimate_uzs": { "min": 2600000, "max": 3400000 }
+    },
+    "mock_text": {
+      "title_ru": "Samsung Galaxy A54 256 ГБ, как новый",
+      "title_uz": "Samsung Galaxy A54 256 GB, yangidek",
+      "description_ru": "Samsung Galaxy A54 на 256 ГБ в отличном состоянии.\nБез видимых дефектов.\nВ комплекте только телефон.",
+      "description_uz": "Samsung Galaxy A54 256 GB, a'lo holatda.\nKo'rinadigan nuqsonlari yo'q.\nFaqat telefonning o'zi."
+    }
+  },
+  {
+    "name": "macbook_air_m1_text_ru",
+    "lang": "ru",
+    "input": "Макбук эйр м1 2020, 8/256, циклов 210, был в чехле, есть зарядка. Причина продажи — купил новый.",
+    "answers": {},
+    "expect": { "category": "laptop", "model_key_contains": "macbook air", "max_questions": 1, "must_mention": ["256"], "forbidden": ["гарантия", "Touch Bar"] },
+    "mock_analysis": {
+      "category": "laptop",
+      "brand": "Apple",
+      "model": "MacBook Air M1 (2020)",
+      "model_key": "apple macbook air m1 256gb",
+      "specs": [{ "name": "ram", "value": "8 GB" }, { "name": "ssd", "value": "256 GB" }, { "name": "battery_cycles", "value": "210" }, { "name": "kit", "value": "charger" }],
+      "condition": "like_new",
+      "visible_defects": [],
+      "questions": [],
+      "photo_hints": [{ "ru": "Сфотографируйте экран «Об этом Mac»", "uz": "«Ushbu Mac haqida» ekranini suratga oling" }],
+      "ai_market_estimate_uzs": { "min": 7000000, "max": 8800000 }
+    },
+    "mock_text": {
+      "title_ru": "MacBook Air M1 8/256, как новый",
+      "title_uz": "MacBook Air M1 8/256, yangidek",
+      "description_ru": "MacBook Air M1 2020, 8 ГБ / 256 ГБ.\n210 циклов, всегда был в чехле.\nЗарядка в комплекте.\nПродаю, потому что купил новый.",
+      "description_uz": "MacBook Air M1 2020, 8 GB / 256 GB.\n210 tsikl, doim g'ilofda bo'lgan.\nZaryadlovchi bilan.\nYangisini olganim uchun sotyapman."
+    }
+  },
+  {
+    "name": "airpods_pro2_voice_ru",
+    "lang": "ru",
+    "input": "Продаю эирподс про второго поколения, оригинал, покупал в Корзинке, есть чек, пользовался полгода.",
+    "answers": { "case_type": "USB-C" },
+    "expect": { "category": "headphones", "model_key_contains": "airpods pro", "max_questions": 2, "must_mention": [], "forbidden": ["гарантия 1 год"] },
+    "mock_analysis": {
+      "category": "headphones",
+      "brand": "Apple",
+      "model": "AirPods Pro 2",
+      "model_key": "apple airpods pro 2",
+      "specs": [{ "name": "receipt", "value": "yes" }, { "name": "usage", "value": "6 months" }],
+      "condition": "good",
+      "visible_defects": [],
+      "questions": [{ "key": "case_type", "question_ru": "Кейс с Lightning или USB-C?", "question_uz": "G'ilof Lightning yoki USB-C?", "options": ["Lightning", "USB-C"] }],
+      "photo_hints": [],
+      "ai_market_estimate_uzs": { "min": 2200000, "max": 2900000 }
+    },
+    "mock_text": {
+      "title_ru": "AirPods Pro 2 (USB-C), с чеком",
+      "title_uz": "AirPods Pro 2 (USB-C), chek bilan",
+      "description_ru": "Оригинальные AirPods Pro 2 с кейсом USB-C.\nПокупал в Korzinka, есть чек.\nВ использовании полгода.",
+      "description_uz": "Original AirPods Pro 2, USB-C g'ilof.\nKorzinka'dan olingan, cheki bor.\nYarim yil ishlatilgan."
+    }
+  },
+  {
+    "name": "ps5_text_uz",
+    "lang": "uz",
+    "input": "PlayStation 5 disk versiya, 2 ta joystik, 3 ta disk sovg'a. Ekranida muammo yo'q, faqat bitta joystikda drift bor.",
+    "answers": {},
+    "expect": { "category": "console", "model_key_contains": "playstation 5", "max_questions": 1, "must_mention": ["drift"], "forbidden": ["1TB", "1 ТБ"] },
+    "mock_analysis": {
+      "category": "console",
+      "brand": "Sony",
+      "model": "PlayStation 5 (disc)",
+      "model_key": "sony playstation 5",
+      "specs": [{ "name": "edition", "value": "disc" }, { "name": "controllers", "value": "2" }, { "name": "games", "value": "3 discs" }],
+      "condition": "good",
+      "visible_defects": [],
+      "questions": [],
+      "photo_hints": [],
+      "ai_market_estimate_uzs": { "min": 5500000, "max": 7000000 }
+    },
+    "mock_text": {
+      "title_ru": "PlayStation 5 с дисководом, 2 геймпада",
+      "title_uz": "PlayStation 5 diskli, 2 ta joystik",
+      "description_ru": "PlayStation 5 с дисководом.\n2 геймпада, на одном есть дрифт стика.\n3 игры на дисках в подарок.",
+      "description_uz": "PlayStation 5 diskli versiya.\n2 ta joystik, bittasida drift bor.\n3 ta o'yin diski sovg'a."
+    }
+  }
+]

@@ -94,3 +94,49 @@ textarea {
 .checklist { list-style: none; padding-left: 0; }
 .links { list-style: none; padding: 0; }
 a { color: var(--link); }
+
+/* ---- seller cabinet ---- */
+button.secondary {
+  background: var(--bg); color: var(--link); border: 1px solid var(--link); border-radius: 10px;
+  padding: 11px 16px; width: 100%; font-weight: 600;
+}
+button.secondary.recording { color: var(--danger); border-color: var(--danger); }
+.field { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--hint); border: 0; padding: 0; margin: 0; }
+.field legend { margin-bottom: 4px; }
+.field input:not([type="checkbox"]):not([type="file"]), .field select, .card input:not([type="checkbox"]):not([type="file"]) {
+  font: inherit; color: var(--text); background: var(--bg); border: 1px solid transparent;
+  border-radius: 10px; padding: 10px 12px; width: 100%;
+}
+.check-row { display: flex; gap: 8px; align-items: center; color: var(--text); font-size: 14px; padding: 4px 0; }
+.chips { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.chip {
+  border: 1px solid var(--hint); background: var(--bg); color: var(--text); border-radius: 999px;
+  padding: 6px 12px; font-size: 13px; display: inline-flex; flex-direction: column; align-items: flex-start;
+}
+.chip.active { border-color: var(--button); outline: 1px solid var(--button); }
+.add-thumb { display: flex; align-items: center; justify-content: center; font-size: 26px; color: var(--link); background: var(--bg); cursor: pointer; }
+.hint-card { background: color-mix(in srgb, var(--button) 10%, var(--bg)); }
+.spinner {
+  width: 36px; height: 36px; border-radius: 50%; border: 4px solid var(--bg);
+  border-top-color: var(--button); animation: spin 0.9s linear infinite; margin: 40px auto 8px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.tabs { display: flex; gap: 4px; background: var(--bg); border-radius: 10px; padding: 3px; overflow-x: auto; }
+.tabs button { flex: 1; border: 0; background: none; color: var(--hint); padding: 8px 6px; border-radius: 8px; white-space: nowrap; }
+.tabs button.active { background: var(--button); color: var(--button-text); }
+.listing-row { display: flex; flex-direction: column; gap: 8px; }
+.listing-main { display: flex; gap: 12px; text-align: left; background: none; border: 0; padding: 0; color: var(--text); }
+.listing-main img, .no-photo { width: 72px; height: 72px; border-radius: 10px; object-fit: cover; flex-shrink: 0; background: var(--bg2); display: flex; align-items: center; justify-content: center; font-size: 28px; }
+.listing-main span { display: flex; flex-direction: column; gap: 2px; }
+.wrap { flex-wrap: wrap; }
+.actions .chip { flex-direction: row; }
+.toast { background: var(--text); color: var(--bg); border-radius: 10px; padding: 10px 12px; font-size: 14px; }
+.badge { color: var(--low); font-weight: 600; }
+.gallery { position: relative; border-radius: 14px; overflow: hidden; background: var(--bg); }
+.gallery img { width: 100%; max-height: 420px; object-fit: contain; display: block; }
+.dots { position: absolute; bottom: 8px; width: 100%; display: flex; justify-content: center; gap: 6px; }
+.dots button { width: 8px; height: 8px; border-radius: 50%; border: 0; padding: 0; background: rgba(255, 255, 255, 0.5); }
+.dots button.active { background: #fff; }
+.price { font-size: 22px; font-weight: 700; }
+.description { white-space: pre-line; }
+.shop-photo { width: 100%; max-height: 200px; object-fit: cover; border-radius: 10px; }

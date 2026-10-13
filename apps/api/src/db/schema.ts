@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import {
+  boolean,
   bigint,
   bigserial,
   index,
@@ -107,4 +108,95 @@ export const settings = pgTable("settings", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+export const shops = pgTable("shops", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  ownerUserId: uuid("owner_user_id")
+    .notNull()
+    .unique()
+    .references(() => users.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  marketLocation: text("market_location"),
+  photoKey: text("photo_key"),
+  verified: boolean("verified").notNull().default(false),
+  verifiedAt: timestamp("verified_at", { withTimezone: true }),
+  createdAt: createdAt(),
+});
+
+/** Telegram channels where the bot is an admin and may post the owner's listings. */
+export const channels = pgTable("channels", {
+  id: serial("id").primaryKey(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  shopId: uuid("shop_id").references(() => shops.id, { onDelete: "set null" }),
+  telegramChannelId: bigint("telegram_channel_id", { mode: "number" }).notNull().unique(),
+  title: text("title").notNull(),
+  createdAt: createdAt(),
+});
+
+export const listings = pgTable(
+  "listings",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    sellerUserId: uuid("seller_user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    shopId: uuid("shop_id").references(() => shops.id, { onDelete: "set null" }),
+    categoryId: integer("category_id").references(() => categories.id),
+    category: text("category").notNull().default("other"),
+    titleRu: text("title_ru").notNull().default(""),
+    titleUz: text("title_uz").notNull().default(""),
+    descriptionRu: text("description_ru").notNull().default(""),
+    descriptionUz: text("description_uz").notNull().default(""),
+    attributes: jsonb("attributes").notNull().default({}),
+    condition: text("condition"),
+    price: bigint("price", { mode: "number" }),
+    currency: text("currency").notNull().default("UZS"),
+    district: text("district"),
+    allowedDeliveryModes: text("allowed_delivery_modes").array().notNull().default(sql`ARRAY['delivery_only','cod_seller']::text[]`),
+    feePayer: text("fee_payer").notNull().default("buyer"),
+    status: text("status").notNull().default("draft"),
+    moderationReason: text("moderation_reason"),
+    riskScore: integer("risk_score"),
+    /** AI analysis (questions, photo hints, market estimate) and seller answers. */
+    aiDraft: jsonb("ai_draft").notNull().default({}),
+    priceSuggestion: jsonb("price_suggestion"),
+    sourceText: text("source_text"),
+    views: integer("views").notNull().default(0),
+    favoritesCount: integer("favorites_count").notNull().default(0),
+    requestsCount: integer("requests_count").notNull().default(0),
+    channelPosts: jsonb("channel_posts").notNull().default([]),
+    soldVia: text("sold_via"),
+    soldAt: timestamp("sold_at", { withTimezone: true }),
+    publishedAt: timestamp("published_at", { withTimezone: true }),
+    bumpedAt: timestamp("bumped_at", { withTimezone: true }),
+    expiresAt: timestamp("expires_at", { withTimezone: true }),
+    createdAt: createdAt(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("listings_seller_status_idx").on(t.sellerUserId, t.status),
+    index("listings_status_bumped_idx").on(t.status, t.bumpedAt),
+  ],
+);
+
+export const listingPhotos = pgTable(
+  "listing_photos",
+  {
+    id: serial("id").primaryKey(),
+    listingId: uuid("listing_id")
+      .notNull()
+      .references(() => listings.id, { onDelete: "cascade" }),
+    storageKey: text("storage_key").notNull(),
+    phash: text("phash"),
+    width: integer("width"),
+    height: integer("height"),
+    position: integer("position").notNull().default(0),
+    createdAt: createdAt(),
+  },
+  (t) => [index("listing_photos_listing_idx").on(t.listingId), index("listing_photos_phash_idx").on(t.phash)],
+);
+
 export type User = typeof users.$inferSelect;
+export type Listing = typeof listings.$inferSelect;
+export type Shop = typeof shops.$inferSelect;

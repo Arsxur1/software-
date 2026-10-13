@@ -14,6 +14,8 @@ import {
   CHECK_CATEGORIES,
   normalizeModelKey,
   sameModel,
+  listingPlainText,
+  suggestPrice,
 } from "../src/index.js";
 
 describe("parsePrice", () => {
@@ -172,5 +174,40 @@ describe("model matching", () => {
     expect(sameModel("apple iphone 13 128gb", "apple iphone 12 128gb")).toBe(false);
     expect(sameModel("apple iphone 13 128gb", "apple iphone 13 256gb")).toBe(false);
     expect(sameModel("apple iphone 13 128gb", "apple iphone 13 pro 128gb")).toBe(false);
+  });
+});
+
+describe("listing helpers", () => {
+  const base = {
+    titleRu: "iPhone 13 128 ГБ",
+    titleUz: "iPhone 13 128 GB",
+    descriptionRu: "Отличное состояние",
+    descriptionUz: "A'lo holatda",
+    price: 5_800_000,
+    condition: "good",
+    district: "chilonzor",
+  } as unknown as import("../src/index.js").ListingDto;
+
+  it("builds copy-paste text for OLX / Instagram in both languages", () => {
+    const ru = listingPlainText(base, "ru");
+    expect(ru).toContain("iPhone 13 128 ГБ");
+    expect(ru).toContain("5 800 000 UZS");
+    expect(ru).toContain("Состояние: Хорошее");
+    expect(ru).toContain("Ташкент, Чиланзар");
+    const uz = listingPlainText(base, "uz");
+    expect(uz).toContain("A'lo holatda");
+    expect(uz).toContain("Toshkent, Chilonzor");
+    expect(uz).not.toMatch(/https?:/);
+  });
+
+  it("suggests quick / market / max prices", () => {
+    expect(suggestPrice({ min: 2_600_000, median: 3_000_000, max: 3_400_000 }, "ai")).toEqual({
+      quick: 2_700_000,
+      market: 3_000_000,
+      max: 3_400_000,
+      source: "ai",
+      approximate: true,
+    });
+    expect(suggestPrice(null, "none")).toBeNull();
   });
 });

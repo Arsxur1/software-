@@ -84,6 +84,28 @@ export class ApiClient {
     return this.request<CheckResult>("/checks", { method: "POST", user, body: form });
   }
 
+  setPhone(user: TgUser, phone: string) {
+    return this.request("/internal/phone", {
+      method: "POST",
+      user,
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ phone }),
+    });
+  }
+
+  linkChannel(user: TgUser, telegramChannelId: number, title: string) {
+    return this.request<{ id: number }>("/internal/channels", {
+      method: "POST",
+      user,
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ telegramChannelId, title }),
+    });
+  }
+
+  unlinkChannel(user: TgUser, telegramChannelId: number) {
+    return this.request<{ title: string | null }>(`/internal/channels/${telegramChannelId}`, { method: "DELETE", user });
+  }
+
   getCheck(id: string) {
     return this.request<CheckResult>(`/checks/${encodeURIComponent(id)}`, {});
   }

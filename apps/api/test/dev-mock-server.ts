@@ -1,13 +1,46 @@
-// Local dev server: real API + real DB, deterministic AI from fixtures (no Anthropic key needed).
+// Local dev server: real API + real DB + local photo storage, deterministic AI from fixtures,
+// fake STT and a channel publisher that only logs. No Anthropic key or bot token needed.
+//   pnpm --filter @ishonch/api dev:mock
 import { buildApp } from "../src/app.js";
 import { buildInitData } from "../src/auth/telegram.js";
 import { loadConfig } from "../src/config.js";
 import { createDb } from "../src/db/client.js";
-import { fixtures, mockAi } from "./helpers.js";
+import { FsStorage } from "../src/storage/storage.js";
+import { fixtures, listingFixtures, mockAiByPrompt } from "./helpers.js";
 
-const config = loadConfig({ ...process.env, BOT_TOKEN: process.env.BOT_TOKEN ?? "123456:DEV", NODE_ENV: "development" });
+const botToken = process.env.BOT_TOKEN ?? "123456:DEV";
+const config = loadConfig({ ...process.env, BOT_TOKEN: botToken, NODE_ENV: "development" });
 const { db } = createDb(config.DATABASE_URL);
-const fixture = fixtures.find((f) => f.name === (process.env.FIXTURE ?? "iphone13_prepay_ru"))!;
-const app = await buildApp({ config, db, ai: mockAi(fixture.mock_extract, 5) });
-await app.listen({ port: 3000, host: "127.0.0.1" });
-console.log("INIT_DATA=" + buildInitData({ id: 777000111, first_name: "E2E", language_code: process.env.E2E_LANG ?? "ru" }, process.env.BOT_TOKEN ?? "123456:DEV"));
+const check = fixtures.find((f) => f.name === (process.env.FIXTURE ?? "iphone13_prepay_ru"))!;
+const listing = listingFixtures.find((f) => f.name === (process.env.LISTING_FIXTURE ?? "samsung_a54_photo_only_ru"))!;
+
+const ai = mockAiByPrompt({
+  check_extract: check.mock_extract,
+  check_report: {
+    pros: ["Свежая модель", "Хорошая батарея"],
+    cons: ["Подозрительно низкая цена", "Продавец в другом городе"],
+    questions: ["Можно встретиться в Ташкенте?", "Какой IMEI?", "Отвязан ли iCloud?", "Был ли ремонт?", "Есть ли чек?"],
+    extra_red_flags: [],
+    risk_adjustment: 5,
+  },
+  listing_analyze: listing.mock_analysis,
+  listing_generate: listing.mock_text,
+});
+
+const app = await buildApp({
+  config,
+  db,
+  ai,
+  storage: new FsStorage(process.env.STORAGE_DIR ?? "./data/storage"),
+  stt: { name: "fake", transcribe: async () => listing.input || "Samsung A54" },
+  publisher: {
+    post: async (channelId, post) => {
+      console.log(`[channel ${channelId}] ${post.caption.replace(/\n/g, " | ")} [${post.button.text} → ${post.button.url}]`);
+      return { messageId: 1 };
+    },
+    miniAppLink: async (p) => `https://t.me/ishonch_dev_bot/app?startapp=${p}`,
+  },
+});
+await app.listen({ port: Number(process.env.PORT ?? 3000), host: "127.0.0.1" });
+const user = { id: Number(process.env.DEV_USER_ID ?? 777000111), first_name: "Dev", language_code: process.env.E2E_LANG ?? "ru" };
+console.log("INIT_DATA=" + buildInitData(user, botToken));

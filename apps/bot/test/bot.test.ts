@@ -68,6 +68,18 @@ class FakeApi {
   async getCheck() {
     return check;
   }
+  async setPhone(_u: unknown, phone: string) {
+    this.calls.push(`setPhone:${phone}`);
+    return {};
+  }
+  async linkChannel(u: { id: number }, id: number, title: string) {
+    this.calls.push(`link:${u.id}:${id}:${title}`);
+    return { id: 1 };
+  }
+  async unlinkChannel(_u: unknown, id: number) {
+    this.calls.push(`unlink:${id}`);
+    return { title: null };
+  }
 }
 
 function setup() {
@@ -139,5 +151,65 @@ describe("bot handlers", () => {
     await bot.handleUpdate(msg(`/start check_${check.id}`));
     const reply = sent.find((s) => s.method === "sendMessage")!;
     expect(String(reply.payload.text)).toContain("iPhone 13");
+  });
+});
+
+const from = { id: 5, is_bot: false, first_name: "A", language_code: "ru" };
+const chatMember = (status: string, canPost = true): Update => ({
+  update_id: 2,
+  my_chat_member: {
+    chat: { id: -100555, type: "channel", title: "Shop channel" },
+    from,
+    date: 0,
+    old_chat_member: { status: "left", user: { id: 1, is_bot: true, first_name: "Ishonch" } },
+    new_chat_member:
+      status === "administrator"
+        ? ({ status, user: { id: 1, is_bot: true, first_name: "Ishonch" }, can_post_messages: canPost } as never)
+        : ({ status, user: { id: 1, is_bot: true, first_name: "Ishonch" } } as never),
+  },
+});
+
+describe("seller handlers", () => {
+  it("links a channel when the bot becomes an admin with posting rights", async () => {
+    const { api, bot, sent } = setup();
+    await bot.handleUpdate(chatMember("administrator"));
+    expect(api.calls).toContain("link:5:-100555:Shop channel");
+    expect(sent.find((s) => s.method === "sendMessage")!.payload.text).toContain("привязан");
+  });
+
+  it("asks for posting rights instead of linking", async () => {
+    const { api, bot, sent } = setup();
+    await bot.handleUpdate(chatMember("administrator", false));
+    expect(api.calls.some((c) => c.startsWith("link"))).toBe(false);
+    expect(String(sent.find((s) => s.method === "sendMessage")!.payload.text)).toContain("право публиковать");
+  });
+
+  it("unlinks when the bot is removed", async () => {
+    const { api, bot } = setup();
+    await bot.handleUpdate(chatMember("left"));
+    expect(api.calls).toContain("unlink:-100555");
+  });
+
+  it("saves the user's own phone, rejects someone else's contact", async () => {
+    const { api, bot, sent } = setup();
+    const contact = (userId: number): Update => ({
+      update_id: 3,
+      message: { message_id: 2, date: 0, chat: { id: 5, type: "private", first_name: "A" }, from, contact: { phone_number: "998901234567", first_name: "A", user_id: userId } },
+    });
+    await bot.handleUpdate(contact(999));
+    expect(api.calls.some((c) => c.startsWith("setPhone"))).toBe(false);
+    await bot.handleUpdate(contact(5));
+    expect(api.calls).toContain("setPhone:998901234567");
+    expect(String(sent.at(-1)!.payload.text)).toContain("Номер сохранён");
+  });
+
+  it("voice message points to the sell screen instead of running a check", async () => {
+    const { api, bot, sent } = setup();
+    await bot.handleUpdate({
+      update_id: 4,
+      message: { message_id: 3, date: 0, chat: { id: 5, type: "private", first_name: "A" }, from, voice: { file_id: "v", file_unique_id: "v", duration: 3 } },
+    });
+    expect(api.calls.some((c) => c.startsWith("check"))).toBe(false);
+    expect(JSON.stringify(sent.at(-1)!.payload.reply_markup)).toContain("screen=sell");
   });
 });

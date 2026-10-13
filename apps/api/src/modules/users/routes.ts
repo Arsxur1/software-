@@ -18,6 +18,7 @@ export function userRoutes(
       language: u.language,
       role: u.role,
       acceptedTerms: u.acceptedTermsAt !== null,
+      hasPhone: !!u.phone,
       createdAt: u.createdAt,
       checks: limit,
     };
