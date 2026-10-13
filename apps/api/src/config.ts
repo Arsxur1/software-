@@ -22,6 +22,7 @@ const EnvSchema = z.object({
   AI_MODEL_STRONG: z.string().default("claude-opus-5-5"),
   AI_MONTHLY_LIMIT_USD: z.coerce.number().default(50),
   CHECKS_PER_DAY: z.coerce.number().default(5),
+  ASSISTANT_PER_DAY: z.coerce.number().default(10),
   USD_RATE: z.coerce.number().default(12800),
   ADMIN_TELEGRAM_IDS: csvNumbers,
   INIT_DATA_MAX_AGE_SEC: z.coerce.number().default(24 * 3600),

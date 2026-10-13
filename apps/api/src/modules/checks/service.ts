@@ -1,4 +1,4 @@
-import { isLinkOnly, scrubPii, type CheckResult, type Lang } from "@ishonch/shared";
+import { isLinkOnly, scrubPii, type CheckResult, type Lang, type MarketRange } from "@ishonch/shared";
 import type { Repo } from "../../db/repo.js";
 import type { User } from "../../db/schema.js";
 import { AiLimitExceededError, AiOutputError, type AiService } from "../../ai/aiService.js";
@@ -29,6 +29,7 @@ export class CheckService {
     private repo: Repo,
     private ai: Pick<AiService, "structured">,
     private defaults: { checksPerDay: number; usdRate: number },
+    private findCatalogPrice: (modelKey: string) => Promise<MarketRange | null> = async () => null,
   ) {}
 
   async limitInfo(user: User) {
@@ -55,7 +56,7 @@ export class CheckService {
         {
           ai: this.ai,
           findReferencePrice: (k) => this.repo.findReferencePrice(k),
-          findCatalogPrice: async () => null, // module A (catalog) is not built yet
+          findCatalogPrice: (k) => this.findCatalogPrice(k),
           usdRate: await this.repo.getSetting("usd_rate", this.defaults.usdRate),
           riskRules: await this.repo.riskRules(),
         },

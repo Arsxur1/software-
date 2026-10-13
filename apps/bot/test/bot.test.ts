@@ -76,6 +76,10 @@ class FakeApi {
     this.calls.push(`link:${u.id}:${id}:${title}`);
     return { id: 1 };
   }
+  async sendConversationMessage(_u: unknown, conv: string, text: string) {
+    this.calls.push(`relay:${conv}:${text}`);
+    return {};
+  }
   async unlinkChannel(_u: unknown, id: number) {
     this.calls.push(`unlink:${id}`);
     return { title: null };
@@ -211,5 +215,27 @@ describe("seller handlers", () => {
     });
     expect(api.calls.some((c) => c.startsWith("check"))).toBe(false);
     expect(JSON.stringify(sent.at(-1)!.payload.reply_markup)).toContain("screen=sell");
+  });
+});
+
+describe("masked chat relay", () => {
+  const conv = "22222222-2222-2222-2222-222222222222";
+  const press = (data: string): Update => ({
+    update_id: 9,
+    callback_query: { id: "cb", from, chat_instance: "x", data, message: { message_id: 1, date: 0, chat: { id: 5, type: "private", first_name: "A" } } as never },
+  });
+
+  it("Reply button → next text goes to the conversation, not to a listing check", async () => {
+    const { api, bot, sent } = setup();
+    await bot.handleUpdate(press(`reply:${conv}`));
+    expect(String(sent.find((s) => s.method === "sendMessage")!.payload.text)).toContain("Напишите ответ");
+    await bot.handleUpdate(msg("Да, ещё продаю"));
+    expect(api.calls).toContain(`relay:${conv}:Да, ещё продаю`);
+    expect(api.calls.some((c) => c.startsWith("checkText"))).toBe(false);
+    expect(sent.at(-1)!.payload.text).toBe("✅ Отправлено");
+
+    // The following message is a normal listing check again.
+    await bot.handleUpdate(msg("iPhone 13 за 3 млн"));
+    expect(api.calls).toContain("checkText:iPhone 13 за 3 млн");
   });
 });

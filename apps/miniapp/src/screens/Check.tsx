@@ -10,9 +10,10 @@ interface Props {
   api: Api;
   remaining: number;
   onDone: (remaining: number) => void;
+  onSimilar: (check: CheckResult) => void;
 }
 
-export function Check({ api, remaining, onDone }: Props) {
+export function Check({ api, remaining, onDone, onSimilar }: Props) {
   const t = useT();
   const lang = useLang();
   const [text, setText] = useState("");
@@ -55,6 +56,9 @@ export function Check({ api, remaining, onDone }: Props) {
     return (
       <div className="stack">
         <CheckCard check={result} />
+        <button className="secondary" onClick={() => onSimilar(result)} data-testid="find-similar">
+          🛍️ {t("bot.find_similar")}
+        </button>
         <button
           className="primary"
           onClick={() => {

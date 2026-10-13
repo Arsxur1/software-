@@ -8,6 +8,7 @@ import {
   jsonb,
   numeric,
   pgTable,
+  primaryKey,
   serial,
   text,
   timestamp,
@@ -196,6 +197,85 @@ export const listingPhotos = pgTable(
   },
   (t) => [index("listing_photos_listing_idx").on(t.listingId), index("listing_photos_phash_idx").on(t.phash)],
 );
+
+export const favorites = pgTable(
+  "favorites",
+  {
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    listingId: uuid("listing_id")
+      .notNull()
+      .references(() => listings.id, { onDelete: "cascade" }),
+    createdAt: createdAt(),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.listingId] })],
+);
+
+export const savedSearches = pgTable(
+  "saved_searches",
+  {
+    id: serial("id").primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    filters: jsonb("filters").notNull(),
+    title: text("title").notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [index("saved_searches_user_idx").on(t.userId)],
+);
+
+/** Sent notifications: dedupe per (search, listing) and enforce ≤3 per user per day. */
+export const searchNotifications = pgTable(
+  "search_notifications",
+  {
+    id: serial("id").primaryKey(),
+    savedSearchId: integer("saved_search_id")
+      .notNull()
+      .references(() => savedSearches.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    listingId: uuid("listing_id")
+      .notNull()
+      .references(() => listings.id, { onDelete: "cascade" }),
+    createdAt: createdAt(),
+  },
+  (t) => [index("search_notifications_user_created_idx").on(t.userId, t.createdAt)],
+);
+
+/** Masked buyer ↔ seller chat relayed by the bot (names and phones are never shown). */
+export const conversations = pgTable(
+  "conversations",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    listingId: uuid("listing_id")
+      .notNull()
+      .references(() => listings.id, { onDelete: "cascade" }),
+    buyerUserId: uuid("buyer_user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    sellerUserId: uuid("seller_user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    createdAt: createdAt(),
+    lastMessageAt: timestamp("last_message_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("conversations_buyer_idx").on(t.buyerUserId, t.listingId)],
+);
+
+export const conversationMessages = pgTable("conversation_messages", {
+  id: bigserial("id", { mode: "number" }).primaryKey(),
+  conversationId: uuid("conversation_id")
+    .notNull()
+    .references(() => conversations.id, { onDelete: "cascade" }),
+  senderUserId: uuid("sender_user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  text: text("text").notNull(),
+  createdAt: createdAt(),
+});
 
 export type User = typeof users.$inferSelect;
 export type Listing = typeof listings.$inferSelect;

@@ -76,7 +76,8 @@ export function mockAiByPrompt(responses: Record<string, unknown>) {
     calls,
     async structured(call: StructuredCall<import("zod").ZodType>) {
       calls.push({ promptId: call.promptId, content: call.content });
-      const data = responses[call.promptId];
+      const r = responses[call.promptId];
+      const data = typeof r === "function" ? (r as (c: StructuredCall<import("zod").ZodType>) => unknown)(call) : r;
       if (data === undefined) throw new Error(`no mock for ${call.promptId}`);
       return {
         data: call.schema.parse(data) as never,

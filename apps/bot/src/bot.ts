@@ -12,6 +12,8 @@ export interface BotConfig {
 }
 
 const MAX_IMAGES = 5;
+/** How long the bot waits for the reply text after "Reply" was pressed. */
+export const REPLY_WINDOW_MS = 15 * 60_000;
 const ALBUM_WAIT_MS = 1200;
 
 function tgUser(ctx: Context): TgUser | null {
@@ -142,6 +144,33 @@ export function createBot(cfg: BotConfig, api: ApiClient) {
     });
   });
 
+  // ---- masked buyer ↔ seller chat: "Reply" button → next text message is relayed ----
+  const pendingReplies = new Map<number, { conversationId: string; at: number }>();
+
+  bot.callbackQuery(/^reply:([0-9a-f-]{36})$/, async (ctx) => {
+    const user = tgUser(ctx);
+    if (!user) return;
+    pendingReplies.set(user.id, { conversationId: ctx.match[1]!, at: Date.now() });
+    const lang = await langOf(user);
+    await ctx.answerCallbackQuery();
+    await ctx.reply(t(lang, "bot.write_reply"), { reply_markup: { force_reply: true } });
+  });
+
+  async function relayReply(ctx: Context, user: TgUser, text: string): Promise<boolean> {
+    const pending = pendingReplies.get(user.id);
+    if (!pending) return false;
+    pendingReplies.delete(user.id);
+    if (Date.now() - pending.at > REPLY_WINDOW_MS) return false;
+    const lang = await langOf(user);
+    try {
+      await api.sendConversationMessage(user, pending.conversationId, text);
+      await ctx.reply(t(lang, "bot.reply_sent"));
+    } catch (err) {
+      await ctx.reply(err instanceof ApiError ? err.message : t(lang, "common.error"));
+    }
+    return true;
+  }
+
   // ---- module D: seller's channel (bot added/removed as channel admin) ----
   bot.on("my_chat_member", async (ctx) => {
     const upd = ctx.myChatMember;
@@ -211,6 +240,7 @@ export function createBot(cfg: BotConfig, api: ApiClient) {
   bot.on("message:text", async (ctx) => {
     const user = tgUser(ctx);
     if (!user || ctx.message.text.startsWith("/")) return;
+    if (await relayReply(ctx, user, ctx.message.text)) return;
     await runCheck(ctx, user, (lang) => api.checkText(user, ctx.message.text, lang));
   });
 

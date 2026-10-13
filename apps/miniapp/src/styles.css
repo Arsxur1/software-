@@ -140,3 +140,38 @@ button.secondary.recording { color: var(--danger); border-color: var(--danger); 
 .price { font-size: 22px; font-weight: 700; }
 .description { white-space: pre-line; }
 .shop-photo { width: 100%; max-height: 200px; object-fit: cover; border-radius: 10px; }
+
+/* ---- catalog & assistant ---- */
+input.search, .card input:not([type="checkbox"]), .card select, .row > input {
+  font: inherit; color: var(--text); background: var(--bg); border: 1px solid transparent;
+  border-radius: 10px; padding: 10px 12px; width: 100%; min-width: 0;
+}
+.scroll-x { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 2px; }
+.scroll-x .chip { white-space: nowrap; flex-shrink: 0; }
+.item-card { display: flex; gap: 8px; align-items: flex-start; padding: 10px; }
+.item-main { display: flex; gap: 12px; flex: 1; text-align: left; background: none; border: 0; padding: 0; color: var(--text); min-width: 0; }
+.item-main img, .item-main .no-photo { width: 96px; height: 96px; border-radius: 10px; object-fit: cover; flex-shrink: 0; background: var(--bg2); }
+.item-body { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.item-price { font-weight: 700; font-size: 16px; }
+.item-actions { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.icon-btn { background: none; border: 0; font-size: 22px; padding: 4px; }
+.market { font-size: 12px; font-weight: 600; border-radius: 6px; padding: 2px 6px; align-self: flex-start; }
+.market-below { background: color-mix(in srgb, var(--medium) 18%, transparent); color: var(--medium); }
+.market-market { background: color-mix(in srgb, var(--low) 15%, transparent); color: var(--low); }
+.market-above { background: color-mix(in srgb, var(--high) 12%, transparent); color: var(--high); }
+.trust { font-size: 12px; }
+.trust-high { color: var(--low); font-weight: 600; }
+.trust-medium { color: var(--medium); }
+.trust-low { color: var(--hint); }
+.bubble { border-radius: 14px; padding: 10px 12px; max-width: 88%; }
+.bubble.user { align-self: flex-end; background: var(--button); color: var(--button-text); }
+.bubble.assistant { align-self: flex-start; background: var(--bg); }
+.composer { display: flex; gap: 8px; align-items: flex-end; position: sticky; bottom: 0; background: var(--bg2); padding: 8px 0; }
+.composer button { width: 52px; }
+.option { gap: 6px; }
+.pros, .cons { list-style: none; padding: 0; font-size: 13px; }
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; font-size: 13px; width: 100%; }
+th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--bg2); vertical-align: top; }
+thead th { font-weight: 700; }
+tbody th { color: var(--hint); font-weight: 500; white-space: nowrap; }

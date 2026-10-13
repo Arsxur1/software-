@@ -98,6 +98,8 @@ export interface ListingServiceDeps {
   usdRate: number;
   /** Feature flag: `cod_platform` stays off until there is a legal entity and a courier contract. */
   codPlatformEnabled: boolean;
+  /** Hook for saved-search alerts (module A). Failures never block publication. */
+  onPublished?: (listingId: string) => Promise<unknown>;
 }
 
 export class ListingService {
@@ -309,6 +311,7 @@ export class ListingService {
     if (user.role === "buyer") await this.db.update(users).set({ role: "seller" }).where(eq(users.id, user.id));
 
     const posted = await this.postToChannels(user, id, channelIds);
+    await this.d.onPublished?.(id).catch((err) => console.error("onPublished failed", err));
     await this.d.repo.event(user.id, "listing_published", { listingId: id, channels: posted.length });
     return { listing: await this.dto(id, user.id), postedChannels: posted.length, failedChannels: channelIds.length - posted.length };
   }

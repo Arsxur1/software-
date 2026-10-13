@@ -6,3 +6,5 @@ export * from "./price/verdict.js";
 export * from "./risk/score.js";
 export * from "./ai/pricing.js";
 export * from "./listing.js";
+export * from "./catalog.js";
+export * from "./search.js";

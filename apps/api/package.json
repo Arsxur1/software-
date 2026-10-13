@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit -p .",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx --env-file-if-exists=../../.env src/db/migrate.ts",
+    "dev:seed-catalog": "tsx --env-file-if-exists=../../.env test/dev-seed-catalog.ts",
     "dev:mock": "tsx --env-file-if-exists=../../.env test/dev-mock-server.ts",
     "db:seed": "tsx --env-file-if-exists=../../.env src/db/seed.ts"
   },

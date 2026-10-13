@@ -6,7 +6,11 @@ import { buildInitData } from "../src/auth/telegram.js";
 import { loadConfig } from "../src/config.js";
 import { createDb } from "../src/db/client.js";
 import { FsStorage } from "../src/storage/storage.js";
+import { readFileSync } from "node:fs";
+import { PROMPTS_DIR } from "@ishonch/shared/node";
 import { fixtures, listingFixtures, mockAiByPrompt } from "./helpers.js";
+
+const assistantCases = JSON.parse(readFileSync(`${PROMPTS_DIR}__fixtures__/assistant.json`, "utf8")).cases;
 
 const botToken = process.env.BOT_TOKEN ?? "123456:DEV";
 const config = loadConfig({ ...process.env, BOT_TOKEN: botToken, NODE_ENV: "development" });
@@ -22,6 +26,27 @@ const ai = mockAiByPrompt({
     questions: ["Можно встретиться в Ташкенте?", "Какой IMEI?", "Отвязан ли iCloud?", "Был ли ремонт?", "Есть ли чек?"],
     extra_red_flags: [],
     risk_adjustment: 5,
+  },
+  // Assistant: always "laptop for video editing ≤ 8M", recommends the first 3 real candidates.
+  assistant_query: assistantCases[0]!.mock_query,
+  assistant_recommend: (call: { content: Array<{ text: string }> }) => {
+    const ctx = JSON.parse(call.content[0]!.text) as { candidates: Array<{ id: string; title: string }> };
+    return {
+      summary: "Для монтажа лучше всего подходит вариант с мощной видеокартой. Обязательно осмотрите ноутбук перед оплатой.",
+      options: ctx.candidates.slice(0, 3).map((c, i) => ({
+        listing_id: c.id,
+        pros: [["Мощная видеокарта RTX 3060", "16 ГБ ОЗУ"], ["Тихий и автономный", "Цена в рынке"], ["Дёшево"]][i] ?? ["—"],
+        cons: [["Батарея ~3 часа"], ["8 ГБ ОЗУ мало для 4K"], ["Слабый процессор для монтажа"]][i] ?? ["—"],
+        fit: ["Лучший выбор для монтажа", "Подойдёт для монтажа в Full HD", "Только для простых задач"][i] ?? "",
+      })),
+    };
+  },
+  assistant_compare: (call: { content: Array<{ text: string }> }) => {
+    const ctx = JSON.parse(call.content[0]!.text) as { listings: Array<{ id: string }> };
+    return {
+      summary: "Для видеомонтажа берите Lenovo Legion: видеокарта и 16 ГБ ОЗУ важнее автономности. Проверьте температуру под нагрузкой.",
+      verdicts: ctx.listings.map((l, i) => ({ listing_id: l.id, best_for: ["монтаж и игры", "автономность и тишина", "учёба"][i] ?? "" })),
+    };
   },
   listing_analyze: listing.mock_analysis,
   listing_generate: listing.mock_text,
@@ -39,6 +64,9 @@ const app = await buildApp({
       return { messageId: 1 };
     },
     miniAppLink: async (p) => `https://t.me/ishonch_dev_bot/app?startapp=${p}`,
+    send: async (chatId, text, buttons) => {
+      console.log(`[dm ${chatId}] ${text.replace(/\n/g, " | ")} ${JSON.stringify(buttons ?? [])}`);
+    },
   },
 });
 await app.listen({ port: Number(process.env.PORT ?? 3000), host: "127.0.0.1" });

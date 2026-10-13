@@ -1,0 +1,48 @@
+{
+  "catalog": [
+    { "key": "mba_m1", "category": "laptop", "titleRu": "MacBook Air M1 8/256, как новый", "titleUz": "MacBook Air M1 8/256, yangidek", "descriptionRu": "MacBook Air M1 2020, 8 ГБ / 256 ГБ, 210 циклов, зарядка в комплекте.", "descriptionUz": "MacBook Air M1 2020, 8 GB / 256 GB, 210 tsikl, zaryadlovchi bilan.", "modelKey": "apple macbook air m1 256gb", "price": 7600000, "condition": "like_new", "district": "chilonzor" },
+    { "key": "lenovo_legion", "category": "laptop", "titleRu": "Lenovo Legion 5 RTX 3060, 16/512", "titleUz": "Lenovo Legion 5 RTX 3060, 16/512", "descriptionRu": "Игровой ноутбук, Ryzen 7, RTX 3060, 16 ГБ ОЗУ, SSD 512 ГБ. Батарея держит 3 часа.", "descriptionUz": "O'yin noutbuki, Ryzen 7, RTX 3060, 16 GB RAM, SSD 512 GB. Batareya 3 soat.", "modelKey": "lenovo legion 5", "price": 7900000, "condition": "good", "district": "yunusobod" },
+    { "key": "hp_office", "category": "laptop", "titleRu": "HP 250 G8 для учёбы", "titleUz": "HP 250 G8 o'qish uchun", "descriptionRu": "Core i3, 8 ГБ, SSD 256 ГБ. Для офиса и учёбы.", "descriptionUz": "Core i3, 8 GB, SSD 256 GB. Ofis va o'qish uchun.", "modelKey": "hp 250 g8", "price": 3200000, "condition": "good", "district": "sergeli" },
+    { "key": "iphone13", "category": "smartphone", "titleRu": "iPhone 13 128 ГБ, батарея 86%", "titleUz": "iPhone 13 128 GB, batareya 86%", "descriptionRu": "Коробка и документы, без ремонтов.", "descriptionUz": "Qutisi va hujjatlari bor, ta'mirlanmagan.", "modelKey": "apple iphone 13 128gb", "price": 5700000, "condition": "good", "district": "chilonzor" },
+    { "key": "redmi_note13", "category": "smartphone", "titleRu": "Redmi Note 13 256 ГБ, новый", "titleUz": "Redmi Note 13 256 GB, yangi", "descriptionRu": "Запечатанный, гарантия магазина 6 месяцев.", "descriptionUz": "Muhrlangan, do'kon kafolati 6 oy.", "modelKey": "xiaomi redmi note 13 256gb", "price": 2450000, "condition": "new", "district": "mirobod" },
+    { "key": "airpods_pro2", "category": "headphones", "titleRu": "AirPods Pro 2 (USB-C), с чеком", "titleUz": "AirPods Pro 2 (USB-C), chek bilan", "descriptionRu": "Оригинал, полгода в использовании.", "descriptionUz": "Original, yarim yil ishlatilgan.", "modelKey": "apple airpods pro 2", "price": 2500000, "condition": "good", "district": "yakkasaroy" },
+    { "key": "ps5", "category": "console", "titleRu": "PlayStation 5 с дисководом, 2 геймпада", "titleUz": "PlayStation 5 diskli, 2 ta joystik", "descriptionRu": "На одном геймпаде дрифт. 3 игры в подарок.", "descriptionUz": "Bitta joystikda drift bor. 3 ta o'yin sovg'a.", "modelKey": "sony playstation 5", "price": 6100000, "condition": "good", "district": "yunusobod" }
+  ],
+  "cases": [
+    {
+      "name": "video_laptop_ru",
+      "lang": "ru",
+      "messages": [{ "role": "user", "content": "Нужен ноутбук для видеомонтажа до 8 млн" }],
+      "expect": { "action": "search", "category": "laptop", "price_max": 8000000, "must_include_any": ["mba_m1", "lenovo_legion"], "must_exclude": ["iphone13", "ps5"] },
+      "mock_query": { "action": "search", "reply": "Ищу ноутбуки для видеомонтажа до 8 млн.", "questions": [], "filters": { "category": "laptop", "keywords": null, "price_max_uzs": 8000000, "price_min_uzs": null, "min_condition": null, "district": null, "verified_only": false }, "needs": "Laptop for video editing, strong CPU/GPU and RAM, budget 8M UZS" }
+    },
+    {
+      "name": "phone_camera_uz",
+      "lang": "uz",
+      "messages": [{ "role": "user", "content": "Kamerasi yaxshi telefon kerak, 6 mln gacha" }],
+      "expect": { "action": "search", "category": "smartphone", "price_max": 6000000, "must_include_any": ["iphone13"], "must_exclude": ["ps5"] },
+      "mock_query": { "action": "search", "reply": "6 mln gacha kamerasi yaxshi telefonlarni qidiryapman.", "questions": [], "filters": { "category": "smartphone", "keywords": null, "price_max_uzs": 6000000, "price_min_uzs": null, "min_condition": null, "district": null, "verified_only": false }, "needs": "Smartphone with a good camera, budget 6M UZS" }
+    },
+    {
+      "name": "vague_gift_ru",
+      "lang": "ru",
+      "messages": [{ "role": "user", "content": "Хочу что-нибудь подарить сыну" }],
+      "expect": { "action": "ask" },
+      "mock_query": { "action": "ask", "reply": "Помогу выбрать подарок!", "questions": ["Сколько лет сыну и что ему нравится — игры, музыка, учёба?", "Какой бюджет?"], "filters": { "category": null, "keywords": null, "price_max_uzs": null, "price_min_uzs": null, "min_condition": null, "district": null, "verified_only": false }, "needs": "Gift for a son, unknown age and budget" }
+    },
+    {
+      "name": "ps5_budget_uz",
+      "lang": "uz",
+      "messages": [{ "role": "user", "content": "PS5 olmoqchiman 6.5 mln gacha" }],
+      "expect": { "action": "search", "category": "console", "price_max": 6500000, "must_include_any": ["ps5"], "must_exclude": ["mba_m1"] },
+      "mock_query": { "action": "search", "reply": "6,5 mln gacha PlayStation 5 qidiryapman.", "questions": [], "filters": { "category": "console", "keywords": "playstation 5", "price_max_uzs": 6500000, "price_min_uzs": null, "min_condition": null, "district": null, "verified_only": false }, "needs": "PlayStation 5, budget 6.5M UZS" }
+    },
+    {
+      "name": "off_topic_ru",
+      "lang": "ru",
+      "messages": [{ "role": "user", "content": "Какая завтра погода в Ташкенте?" }],
+      "expect": { "action": "off_topic" },
+      "mock_query": { "action": "off_topic", "reply": "Я помогаю только с выбором товаров в Ishonch.", "questions": [], "filters": { "category": null, "keywords": null, "price_max_uzs": null, "price_min_uzs": null, "min_condition": null, "district": null, "verified_only": false }, "needs": "" }
+    }
+  ]
+}

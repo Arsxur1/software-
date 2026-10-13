@@ -12,7 +12,7 @@ import { loadConfig } from "../src/config.js";
 import { createDb } from "../src/db/client.js";
 import { FsStorage } from "../src/storage/storage.js";
 import type { SpeechToText } from "../src/stt/speechToText.js";
-import type { ChannelPost, ChannelPublisher } from "../src/telegram/publisher.js";
+import type { ChannelPost, ChannelPublisher, Notifier } from "../src/telegram/publisher.js";
 import { listingFixtures, mockAiByPrompt, testPhoto } from "./helpers.js";
 
 const url = process.env.TEST_DATABASE_URL ?? "postgres://ishonch:ishonch@localhost:5432/ishonch";
@@ -47,7 +47,8 @@ describe.skipIf(!reachable)("seller cabinet (integration)", () => {
   const fx = listingFixtures.find((f) => f.name === "samsung_a54_photo_only_ru")!;
   const ai = mockAiByPrompt({ listing_analyze: fx.mock_analysis, listing_generate: fx.mock_text });
   const stt: SpeechToText = { name: "fake", transcribe: async () => "Samsung A54 sotaman, 256 gigabayt" };
-  const publisher: ChannelPublisher = {
+  const publisher: ChannelPublisher & Notifier = {
+    send: async () => undefined,
     post: async (channelId, post) => {
       posts.push({ channelId, post });
       return { messageId: posts.length };

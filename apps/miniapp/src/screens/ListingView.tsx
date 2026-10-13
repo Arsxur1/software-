@@ -1,27 +1,46 @@
 import { useEffect, useState } from "react";
-import { formatUzs, listingDescription, listingTitle, type ListingDto } from "@ishonch/shared";
+import { formatUzs, listingDescription, listingTitle, type CatalogItem } from "@ishonch/shared";
 import { ApiError, apiUrl, type Api } from "../api";
+import { MarketBadge, TrustBadge } from "../components/ItemCard";
 import { useLang, useT } from "../i18n";
+import { ensureWriteAccess } from "../telegram";
 
-/** Public listing card (target of the "Buy with delivery" button in seller channels). */
-export function ListingView({ api, id }: { api: Api; id: string }) {
+/** Public listing card (catalog, assistant, and the "Buy with delivery" button in seller channels). */
+export function ListingView({ api, id, meId }: { api: Api; id: string; meId: string }) {
   const t = useT();
   const lang = useLang();
-  const [l, setL] = useState<ListingDto | null>(null);
+  const [item, setItem] = useState<CatalogItem | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [photo, setPhoto] = useState(0);
-  const [showDelivery, setShowDelivery] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
+  const [writing, setWriting] = useState(false);
+  const [message, setMessage] = useState("");
 
   useEffect(() => {
     api
-      .listing(id)
-      .then(setL)
+      .catalogItem(id)
+      .then(setItem)
       .catch((e) => setError(e instanceof ApiError ? e.message : t("listing.not_found")));
   }, [api, id]);
 
   if (error) return <p className="center hint">{error}</p>;
-  if (!l) return <p className="center hint">{t("common.loading")}</p>;
+  if (!item) return <p className="center hint">{t("common.loading")}</p>;
+  const l = item.listing;
+  const own = l.seller?.id === meId;
   const date = (iso: string) => new Date(iso).toLocaleDateString(lang === "ru" ? "ru-RU" : "uz-UZ");
+
+  async function send() {
+    if (!message.trim()) return;
+    if (!(await ensureWriteAccess())) return setToast(t("listing.write_access"));
+    try {
+      await api.contact(l.id, message);
+      setToast(t("listing.sent"));
+      setWriting(false);
+      setMessage("");
+    } catch (e) {
+      setToast(e instanceof ApiError ? e.message : t("common.error"));
+    }
+  }
 
   return (
     <div className="stack" data-testid="listing-view">
@@ -37,8 +56,23 @@ export function ListingView({ api, id }: { api: Api; id: string }) {
           )}
         </div>
       )}
-      <h1>{listingTitle(l, lang)}</h1>
+      <div className="row between">
+        <h1>{listingTitle(l, lang)}</h1>
+        {!own && (
+          <button
+            className="icon-btn"
+            aria-label={item.favorite ? t("listing.favorite_remove") : t("listing.favorite_add")}
+            onClick={async () => {
+              await api.setFavorite(l.id, !item.favorite).catch(() => undefined);
+              setItem({ ...item, favorite: !item.favorite });
+            }}
+          >
+            {item.favorite ? "❤️" : "🤍"}
+          </button>
+        )}
+      </div>
       {l.price && <p className="price">{formatUzs(l.price)}</p>}
+      <MarketBadge item={item} />
       <p className="hint">
         {l.condition && t(`condition.${l.condition}`)}
         {l.district && ` · 📍 ${t(`district.${l.district}`)}`}
@@ -46,8 +80,9 @@ export function ListingView({ api, id }: { api: Api; id: string }) {
       <p className="description">{listingDescription(l, lang)}</p>
 
       {l.seller && (
-        <section className="card">
+        <section className="card stack">
           <h3>{t("listing.seller")}</h3>
+          <TrustBadge item={item} />
           {l.seller.shop && (
             <p>
               🏪 {l.seller.shop.name} {l.seller.shop.verified && <span className="badge">{t("shop.verified")}</span>}
@@ -69,12 +104,42 @@ export function ListingView({ api, id }: { api: Api; id: string }) {
         <p className="hint">{t(`fee_payer.${l.feePayer}`)}</p>
       </section>
 
-      {l.status === "active" && (
-        <button className="primary" onClick={() => setShowDelivery(true)}>
-          {t("listing.buy_delivery")}
-        </button>
+      {toast && (
+        <p className="toast" onClick={() => setToast(null)}>
+          {toast}
+        </p>
       )}
-      {showDelivery && <p className="toast">{t("listing.delivery_soon")}</p>}
+
+      {own ? (
+        <p className="hint center">{t("listing.own")}</p>
+      ) : (
+        l.status === "active" && (
+          <>
+            {writing ? (
+              <div className="card stack">
+                <textarea
+                  rows={3}
+                  placeholder={t("listing.write_placeholder")}
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  data-testid="contact-text"
+                />
+                <p className="hint">{t("listing.contact_hint")}</p>
+                <button className="primary" onClick={send} disabled={!message.trim()} data-testid="contact-send">
+                  {t("listing.send")}
+                </button>
+              </div>
+            ) : (
+              <button className="secondary" onClick={() => setWriting(true)} data-testid="contact-open">
+                💬 {t("listing.write")}
+              </button>
+            )}
+            <button className="primary" onClick={() => setToast(t("listing.delivery_soon"))}>
+              {t("listing.buy_delivery")}
+            </button>
+          </>
+        )
+      )}
     </div>
   );
 }

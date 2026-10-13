@@ -106,6 +106,15 @@ export class ApiClient {
     return this.request<{ title: string | null }>(`/internal/channels/${telegramChannelId}`, { method: "DELETE", user });
   }
 
+  sendConversationMessage(user: TgUser, conversationId: string, text: string) {
+    return this.request(`/internal/conversations/${encodeURIComponent(conversationId)}/messages`, {
+      method: "POST",
+      user,
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ text }),
+    });
+  }
+
   getCheck(id: string) {
     return this.request<CheckResult>(`/checks/${encodeURIComponent(id)}`, {});
   }

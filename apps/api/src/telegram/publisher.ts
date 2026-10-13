@@ -14,7 +14,14 @@ export interface ChannelPublisher {
   miniAppLink(startParam: string): Promise<string>;
 }
 
-export class BotApiPublisher implements ChannelPublisher {
+export type NotifyButton = { text: string; url: string } | { text: string; callbackData: string };
+
+/** Direct messages from the bot to a user (masked chat, saved-search alerts). */
+export interface Notifier {
+  send(telegramUserId: number, text: string, buttons?: NotifyButton[][]): Promise<void>;
+}
+
+export class BotApiPublisher implements ChannelPublisher, Notifier {
   private api: Api;
   private username: Promise<string> | null = null;
 
@@ -35,6 +42,19 @@ export class BotApiPublisher implements ChannelPublisher {
         })
       : await this.api.sendMessage(channelId, post.caption, { parse_mode: "HTML", reply_markup });
     return { messageId: msg.message_id };
+  }
+
+  async send(telegramUserId: number, text: string, buttons: NotifyButton[][] = []) {
+    await this.api.sendMessage(telegramUserId, text, {
+      link_preview_options: { is_disabled: true },
+      reply_markup: buttons.length
+        ? {
+            inline_keyboard: buttons.map((row) =>
+              row.map((b) => ("url" in b ? { text: b.text, url: b.url } : { text: b.text, callback_data: b.callbackData })),
+            ),
+          }
+        : undefined,
+    });
   }
 
   async miniAppLink(startParam: string) {

@@ -1,4 +1,37 @@
-import type { CheckResult, Lang, ListingDto, ListingStatus } from "@ishonch/shared";
+import type {
+  AssistantMessage,
+  AssistantResponse,
+  CatalogFilters,
+  CatalogItem,
+  CatalogPage,
+  CatalogSort,
+  CheckResult,
+  CompareResponse,
+  Lang,
+  ListingDto,
+  ListingStatus,
+} from "@ishonch/shared";
+
+export interface SavedSearch {
+  id: number;
+  title: string;
+  filters: CatalogFilters;
+  createdAt: string;
+}
+
+export function filtersToQuery(f: CatalogFilters, sort?: CatalogSort, offset = 0) {
+  const p = new URLSearchParams();
+  if (f.q) p.set("q", f.q);
+  if (f.category) p.set("category", f.category);
+  if (f.priceMin) p.set("priceMin", String(f.priceMin));
+  if (f.priceMax) p.set("priceMax", String(f.priceMax));
+  if (f.conditions?.length) p.set("conditions", f.conditions.join(","));
+  if (f.district) p.set("district", f.district);
+  if (f.verifiedOnly) p.set("verifiedOnly", "true");
+  if (sort) p.set("sort", sort);
+  if (offset) p.set("offset", String(offset));
+  return p.toString();
+}
 
 const BASE = import.meta.env.VITE_API_URL ?? "/api";
 
@@ -101,6 +134,19 @@ export function createApi(initData: string | null) {
       return request<ShopInfo["shop"]>("/shops/mine/photo", { method: "POST", body: form });
     },
     unlinkChannel: (id: number) => request(`/channels/${id}`, { method: "DELETE" }),
+
+    // ---- catalog & buyer tools ----
+    catalog: (f: CatalogFilters, sort: CatalogSort, offset = 0) => request<CatalogPage>(`/catalog?${filtersToQuery(f, sort, offset)}`),
+    catalogItem: (id: string) => request<CatalogItem>(`/catalog/${encodeURIComponent(id)}`),
+    setFavorite: (id: string, on: boolean) => request(`/favorites/${id}`, { method: on ? "POST" : "DELETE" }),
+    favorites: () => request<CatalogItem[]>("/favorites"),
+    searches: () => request<SavedSearch[]>("/searches"),
+    saveSearch: (f: CatalogFilters) => request<SavedSearch>("/searches", json("POST", f)),
+    deleteSearch: (id: number) => request(`/searches/${id}`, { method: "DELETE" }),
+    contact: (id: string, text: string) => request<{ ok: true }>(`/listings/${id}/contact`, json("POST", { text })),
+    assistant: (messages: AssistantMessage[], lang: Lang) => request<AssistantResponse>("/assistant", json("POST", { messages, lang })),
+    compare: (ids: string[], lang: Lang, needs?: string) =>
+      request<CompareResponse>("/assistant/compare", json("POST", { ids, lang, needs })),
   };
 }
 

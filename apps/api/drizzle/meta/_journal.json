@@ -15,6 +15,13 @@
       "when": 1791877831343,
       "tag": "0001_seller_cabinet",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791878835984,
+      "tag": "0002_catalog",
+      "breakpoints": true
     }
   ]
 }

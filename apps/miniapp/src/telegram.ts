@@ -4,6 +4,7 @@ import {
   isTMA,
   miniApp,
   requestPhoneAccess,
+  requestWriteAccess,
   retrieveRawInitData,
   retrieveLaunchParams,
   themeParams,
@@ -49,7 +50,9 @@ export function initTelegram(): TelegramEnv {
     inTelegram: true,
     initData: retrieveRawInitData() ?? null,
     languageCode: lp.tgWebAppData?.user?.language_code,
-    startParam: lp.tgWebAppStartParam ?? screenParam() ?? undefined,
+    // t.me/<bot>?startapp=… arrives as tgWebAppStartParam; bot web_app buttons pass ?startapp= / ?screen= in the URL.
+    startParam:
+      lp.tgWebAppStartParam ?? new URLSearchParams(window.location.search).get("startapp") ?? screenParam() ?? undefined,
   };
 }
 
@@ -66,6 +69,16 @@ export async function askPhone(): Promise<boolean> {
   if (!requestPhoneAccess.isAvailable()) return false;
   const status = await requestPhoneAccess();
   return status === "sent";
+}
+
+/** The bot can only DM users who allowed it; needed to deliver seller replies. */
+export async function ensureWriteAccess(): Promise<boolean> {
+  if (!requestWriteAccess.isAvailable()) return true; // outside Telegram or old client: nothing to ask
+  try {
+    return (await requestWriteAccess()) === "allowed";
+  } catch {
+    return false;
+  }
 }
 
 export function setBackButton(onClick: (() => void) | null) {

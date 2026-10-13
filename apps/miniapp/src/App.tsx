@@ -1,9 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import { normalizeLang, type Lang, type ListingDto } from "@ishonch/shared";
+import { normalizeLang, type CatalogFilters, type CheckResult, type Lang, type ListingDto } from "@ishonch/shared";
 import { t } from "@ishonch/shared/i18n";
 import { createApi, type Me } from "./api";
 import { LangContext } from "./i18n";
+import { Assistant } from "./screens/Assistant";
+import { Catalog } from "./screens/Catalog";
 import { Check } from "./screens/Check";
+import { Favorites } from "./screens/Favorites";
 import { Home } from "./screens/Home";
 import { ListingView } from "./screens/ListingView";
 import { MyListings } from "./screens/MyListings";
@@ -18,7 +21,15 @@ type Screen =
   | { name: "sell"; existing?: ListingDto }
   | { name: "my" }
   | { name: "shop" }
-  | { name: "listing"; id: string };
+  | { name: "listing"; id: string }
+  | { name: "catalog"; filters?: CatalogFilters }
+  | { name: "assistant" }
+  | { name: "favorites" };
+
+/** "Find similar at verified sellers" from a check result. */
+export function similarFilters(check: Pick<CheckResult, "title" | "category">): CatalogFilters {
+  return { q: check.title, category: check.category === "other" ? undefined : check.category, verifiedOnly: true };
+}
 
 /** Start params: `listing_<uuid>` (channel button), `screen_sell` / `screen_my` (bot buttons). */
 function initialScreen(startParam?: string): Screen {
@@ -27,6 +38,8 @@ function initialScreen(startParam?: string): Screen {
   if (startParam === "screen_sell") return { name: "sell" };
   if (startParam === "screen_my") return { name: "my" };
   if (startParam === "screen_check") return { name: "check" };
+  if (startParam === "screen_catalog") return { name: "catalog" };
+  if (startParam === "screen_assistant") return { name: "assistant" };
   return { name: "home" };
 }
 
@@ -52,6 +65,12 @@ export function App({ env }: { env: TelegramEnv }) {
   }, [api]);
 
   useEffect(() => setBackButton(screen.name === "home" ? null : home), [screen]);
+
+  // Bot button "Find similar" → similar_<checkId>: open the catalog with the checked item.
+  useEffect(() => {
+    const m = env.startParam?.match(/^similar_([0-9a-f-]{36})$/i);
+    if (m) api.getCheck(m[1]!).then((c) => setScreen({ name: "catalog", filters: similarFilters(c) })).catch(() => undefined);
+  }, [api, env.startParam]);
 
   async function acceptTerms() {
     setBusy(true);
@@ -85,6 +104,7 @@ export function App({ env }: { env: TelegramEnv }) {
             api={api}
             remaining={me.checks.remaining}
             onDone={(remaining) => setMe({ ...me, checks: { ...me.checks, remaining } })}
+            onSimilar={(c) => setScreen({ name: "catalog", filters: similarFilters(c) })}
           />
         );
         break;
@@ -111,7 +131,29 @@ export function App({ env }: { env: TelegramEnv }) {
         body = <Shop api={api} />;
         break;
       case "listing":
-        body = <ListingView api={api} id={screen.id} />;
+        body = <ListingView key={screen.id} api={api} id={screen.id} meId={me.id} />;
+        break;
+      case "catalog":
+        body = (
+          <Catalog
+            key={JSON.stringify(screen.filters ?? {})}
+            api={api}
+            initial={screen.filters}
+            onOpen={(id) => setScreen({ name: "listing", id })}
+          />
+        );
+        break;
+      case "assistant":
+        body = <Assistant api={api} onOpen={(id) => setScreen({ name: "listing", id })} />;
+        break;
+      case "favorites":
+        body = (
+          <Favorites
+            api={api}
+            onOpen={(id) => setScreen({ name: "listing", id })}
+            onSearch={(s) => setScreen({ name: "catalog", filters: s.filters })}
+          />
+        );
         break;
       default:
         body = (

@@ -3,7 +3,7 @@ import { useLang, useT } from "../i18n";
 
 interface Props {
   remaining: number;
-  onOpen: (screen: "check" | "sell" | "my" | "shop") => void;
+  onOpen: (screen: "check" | "sell" | "my" | "shop" | "catalog" | "assistant" | "favorites") => void;
   onLanguage: (lang: Lang) => void;
   onDeleteAccount: () => void;
 }
@@ -36,6 +36,30 @@ export function Home({ remaining, onOpen, onLanguage, onDeleteAccount }: Props) 
         </span>
       </button>
 
+      <button className="tile" onClick={() => onOpen("catalog")} data-testid="open-catalog">
+        <span className="tile-icon">🛍️</span>
+        <span>
+          <strong>{t("home.catalog.title")}</strong>
+          <span className="hint">{t("home.catalog.desc_ready")}</span>
+        </span>
+      </button>
+
+      <button className="tile" onClick={() => onOpen("assistant")} data-testid="open-assistant">
+        <span className="tile-icon">🤖</span>
+        <span>
+          <strong>{t("home.assistant.title")}</strong>
+          <span className="hint">{t("home.assistant.desc")}</span>
+        </span>
+      </button>
+
+      <button className="tile" onClick={() => onOpen("favorites")}>
+        <span className="tile-icon">❤️</span>
+        <span>
+          <strong>{t("home.favorites.title")}</strong>
+          <span className="hint">{t("home.favorites.desc")}</span>
+        </span>
+      </button>
+
       <button className="tile" onClick={() => onOpen("sell")} data-testid="open-sell">
         <span className="tile-icon">📸</span>
         <span>
@@ -57,16 +81,6 @@ export function Home({ remaining, onOpen, onLanguage, onDeleteAccount }: Props) 
         <span>
           <strong>{t("home.shop.title")}</strong>
           <span className="hint">{t("home.shop.desc")}</span>
-        </span>
-      </button>
-
-      <button className="tile" disabled>
-        <span className="tile-icon">🛍️</span>
-        <span>
-          <strong>{t("home.catalog.title")}</strong>
-          <span className="hint">
-            {t("home.catalog.desc")} · {t("common.soon")}
-          </span>
         </span>
       </button>
 

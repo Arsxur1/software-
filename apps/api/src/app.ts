@@ -16,7 +16,10 @@ import { ListingService } from "./modules/listings/service.js";
 import { ShopService } from "./modules/shops/service.js";
 import { FsStorage, S3Storage, type Storage } from "./storage/storage.js";
 import { DisabledSpeechToText, HttpWhisperSpeechToText, type SpeechToText } from "./stt/speechToText.js";
-import { BotApiPublisher, type ChannelPublisher } from "./telegram/publisher.js";
+import { BotApiPublisher, type ChannelPublisher, type Notifier } from "./telegram/publisher.js";
+import { AssistantService } from "./modules/catalog/assistant.js";
+import { catalogRoutes } from "./modules/catalog/routes.js";
+import { CatalogService } from "./modules/catalog/service.js";
 
 export interface AppDeps {
   config: Config;
@@ -25,7 +28,7 @@ export interface AppDeps {
   ai?: Pick<AiService, "structured">;
   storage?: Storage;
   stt?: SpeechToText;
-  publisher?: ChannelPublisher | null;
+  publisher?: (ChannelPublisher & Notifier) | null;
 }
 
 export function createStorage(config: Config): Storage {
@@ -71,7 +74,16 @@ export async function buildApp({ config, db, ai, storage, stt, publisher }: AppD
     internalToken: config.INTERNAL_API_TOKEN,
     maxAgeSec: config.INIT_DATA_MAX_AGE_SEC,
   });
-  const checks = new CheckService(repo, aiService, { checksPerDay: config.CHECKS_PER_DAY, usdRate: config.USD_RATE });
+  const gateway =
+    publisher !== undefined ? publisher : config.BOT_TOKEN ? new BotApiPublisher(config.BOT_TOKEN, config.MINIAPP_LINK) : null;
+  // eslint-disable-next-line prefer-const
+  let catalog: CatalogService;
+  const checks = new CheckService(
+    repo,
+    aiService,
+    { checksPerDay: config.CHECKS_PER_DAY, usdRate: config.USD_RATE },
+    (key) => catalog.findCatalogPrice(key),
+  );
 
   const store = storage ?? createStorage(config);
   const shopsSvc = new ShopService(repo, store);
@@ -84,10 +96,17 @@ export async function buildApp({ config, db, ai, storage, stt, publisher }: AppD
       (config.STT_URL
         ? new HttpWhisperSpeechToText({ url: config.STT_URL, apiKey: config.STT_API_KEY, model: config.STT_MODEL })
         : new DisabledSpeechToText()),
-    publisher: publisher !== undefined ? publisher : config.BOT_TOKEN ? new BotApiPublisher(config.BOT_TOKEN, config.MINIAPP_LINK) : null,
+    publisher: gateway,
+    onPublished: (id) => catalog.notifySavedSearches(id),
     photoSecret: config.PHOTO_URL_SECRET || `${config.INTERNAL_API_TOKEN}:photos`,
     usdRate: config.USD_RATE,
     codPlatformEnabled: config.COD_PLATFORM_ENABLED,
+  });
+
+  catalog = new CatalogService(repo, listingsSvc, gateway);
+  const assistant = new AssistantService(repo, catalog, aiService, {
+    perDay: config.ASSISTANT_PER_DAY,
+    usdRate: config.USD_RATE,
   });
 
   app.get("/health", async () => ({ ok: true }));
@@ -99,6 +118,11 @@ export async function buildApp({ config, db, ai, storage, stt, publisher }: AppD
     requireInternal: auth.requireInternal,
     optionalUser: auth.optionalUser,
     requireAdmin: auth.requireRole("admin"),
+  });
+  catalogRoutes(app, catalog, assistant, {
+    requireUser: auth.requireUser,
+    requireInternal: auth.requireInternal,
+    optionalUser: auth.optionalUser,
   });
 
   return app;
